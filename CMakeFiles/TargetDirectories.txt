@@ -1,3 +1,0 @@
-/Users/cgruska/development/groggScript/CMakeFiles/GroggScript.dir
-/Users/cgruska/development/groggScript/CMakeFiles/edit_cache.dir
-/Users/cgruska/development/groggScript/CMakeFiles/rebuild_cache.dir
