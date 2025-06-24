@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/GroggScript.dir/src/lexer/tokenizer.cpp.o CMakeFiles/GroggScript.dir/src/main.cpp.o CMakeFiles/GroggScript.dir/src/syntax_tree/syntax_tree.cpp.o -o GroggScript
