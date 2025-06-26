@@ -23,24 +23,52 @@ namespace GroggScript
         {
             for (const auto &token : _tokens)
             {
-                out << "TokenType: " << (int)token.token << ". Stores: " << token.value << '\n';
+                out << "TokenType: " << tokenTypeToString(token.token) << ". Stores: " << token.value << '\n';
             }
         }
-        void printTags(std::ostream &out = std::cout)
+        void printTags(std::ostream &out = std::cout, bool tagOnly = false)
         {
+
             for (const auto &token : _tokens)
             {
-                out << "<| " << token.value << ' |>\n';
+                auto stringRepr = tokenTypeToString(token.token);
+                if (!tagOnly)
+                {
+                    out << '<' << stringRepr << '>' << token.value;
+                }
+                out << '<' << stringRepr << "/>" << '\n';
             }
+            out << '\n';
+        }
+        string getLinePos()
+        {
+            string output = "Ln " + std::to_string(line) + ", Col " + std::to_string(col);
+            return output;
         }
 
     protected:
         const string _rawString;
+
+        int line = 1;
+        int col = 1; // Mostly here for logs
+        void newLine()
+        {
+            line++;
+            col = 1;
+        }
         std::string::const_iterator _it;
         std::string::const_iterator _end;
         char advance()
         {
             std::advance(_it, 1);
+            if (*_it == '\n')
+            {
+                newLine();
+            }
+            else
+            {
+                col++;
+            }
             return *_it;
         }
         char peek() const

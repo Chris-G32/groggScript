@@ -5,6 +5,7 @@
 #include <regex>
 #define STRING_TYPE_KEYWORD "string"
 #define INTEGER_TYPE_KEYWORD "int"
+#define BOOLEAN_TYPE_KEYWORD "bool"
 void GroggScript::Tokenizer::generateTokens()
 {
     bool keepGoing = true;
@@ -14,6 +15,24 @@ void GroggScript::Tokenizer::generateTokens()
         auto currentChar = *_it;
         switch (currentChar)
         {
+        case '(':
+        {
+            _tokens.push_back({TokenType::OPEN_PARENTHESES, "("});
+            advance();
+            break;
+        }
+        case ')':
+        {
+            _tokens.push_back({TokenType::CLOSE_PARENTHESES, ")"});
+            advance();
+            break;
+        }
+        case '.':
+        {
+            _tokens.push_back({TokenType::DOT, "."});
+            advance();
+            break;
+        }
         case '+':
         {
             addOneOrDouble('+', TokenType::PLUS, TokenType::DOUBLE_PLUS);
@@ -26,7 +45,33 @@ void GroggScript::Tokenizer::generateTokens()
         }
         case '/':
         {
-            addOneOrDouble('=', TokenType::FORWARD_SLASH, TokenType::DOUBLE_FORWARD_SLASH);
+            char next = advance();
+            if (next == '/')
+            {
+                next = advance();
+                while (next != '\n' && next != '\0')
+                {
+                    next = advance();
+                }
+            }
+            else if (next == '*')
+            {
+                next = advance();
+                while (next != '\0' && !(next == '*' && peek() == '/'))
+                {
+                    next = advance();
+                }
+                advance();
+                advance();
+                if (next == '\0')
+                {
+                    logger.warn("Never ending multiline comment");
+                }
+            }
+            else
+            {
+                _tokens.push_back({TokenType::FORWARD_SLASH, "/"});
+            }
             break;
         }
         case '*':
@@ -49,29 +94,44 @@ void GroggScript::Tokenizer::generateTokens()
         }
         case '"':
         {
-            string builder("\""); // Start with open quote
-            char peeked = peek();
+            string builder; // Start with open quote
+            char next = advance();
             bool foundClose = false;
-            while ((peeked != '\0') && (!foundClose) && (peeked != '\n'))
+            bool escaped = false;
+            while ((next != '\0') && (!foundClose) && (next != '\n'))
             {
-                if (peeked == '\"')
+
+                if (next == '\\' && !escaped)
+                {
+                    escaped = true;
+                    auto peeked = peek();
+                    if (peeked != '\"' && peeked != '\\')
+                    {
+                        logger.warn("Unnecessary escape encountered at " + getLinePos());
+                    }
+                    next = advance();
+                    continue;
+                }
+                else if (next == '\"' && !escaped)
                 {
                     foundClose = true;
+                    advance();
+                    continue;
                 }
-                builder.append(1, advance());
-                peeked = peek();
+                escaped = false;
+                builder.append(1, next);
+                next = advance();
             }
 
             if (!foundClose)
             {
-                throw std::runtime_error("Expected a closing parentheses.");
+                throw std::runtime_error("Expected a closing quotation mark.");
             }
             _tokens.push_back({TokenType::STRING_VALUE, builder});
-            advance();
             break;
         }
         case '\0':
-            logger.debug("Encountered end of string");
+            logger.debug("Encountered end of string at" + getLinePos());
             return;
         default:
         {
@@ -79,28 +139,27 @@ void GroggScript::Tokenizer::generateTokens()
             {
                 logger.debug("Parsing number");
                 string number(1, currentChar);
-                char peeked = advance(); // advance here instead of peeking then advancing.
+                char next = advance(); // advance here instead of peeking then advancing.
                 int decimalCount = 0;
                 auto isValid = [&decimalCount](char value)
                 {
                     return isnumber(value) || (value == '.' && decimalCount < 1);
                 };
-                auto processCharacter = [&number, &peeked, this]()
+                auto processCharacter = [&number, &next, this]()
                 {
-                    number.append(1, peeked);
-                    advance();
-                    peeked = peek();
+                    number.append(1, next);
+                    next = advance();
                 };
-                while (isValid(peeked) && (peeked != '\0'))
+                while (isValid(next) && (next != '\0'))
                 {
-                    if (peeked == '.')
+                    if (next == '.')
                     {
                         decimalCount += 1;
                     }
                     processCharacter();
                 }
                 _tokens.push_back({TokenType::NUMBER, number});
-                advance();
+
                 break;
             }
             else if (isalpha(currentChar) || currentChar == '_')
@@ -115,9 +174,29 @@ void GroggScript::Tokenizer::generateTokens()
                     working.append(1, next);
                     next = advance();
                 }
-                if (working == STRING_TYPE_KEYWORD || working == INTEGER_TYPE_KEYWORD)
+                if (working == INTEGER_TYPE_KEYWORD)
                 {
-                    _tokens.push_back({TokenType::RESERVED_TYPE, working});
+                    _tokens.push_back({TokenType::RESERVED_INTEGER_TYPE, working});
+                    break;
+                }
+                else if (working == STRING_TYPE_KEYWORD)
+                {
+                    _tokens.push_back({TokenType::RESERVED_STRING_TYPE, working});
+                    break;
+                }
+                else if (working == BOOLEAN_TYPE_KEYWORD)
+                {
+                    _tokens.push_back({TokenType::RESERVED_BOOLEAN_TYPE, working});
+                    break;
+                }
+                else if (working == "true")
+                {
+                    _tokens.push_back({TokenType::TRUE, working});
+                    break;
+                }
+                else if (working == "false")
+                {
+                    _tokens.push_back({TokenType::FALSE, working});
                     break;
                 }
                 _tokens.push_back({TokenType::SYMBOL, working});
