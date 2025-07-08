@@ -6,6 +6,15 @@
 #define STRING_TYPE_KEYWORD "string"
 #define INTEGER_TYPE_KEYWORD "int"
 #define BOOLEAN_TYPE_KEYWORD "bool"
+#define VAR_TYPE_KEYWORD "var"
+#define SIMPLE_HANDLER(ch, tokenType)                       \
+    case ch:                                                \
+    {                                                       \
+        _tokens.push_back({tokenType, std::string(1, ch)}); \
+        advance();                                          \
+        break;                                              \
+    }
+
 void GroggScript::Tokenizer::generateTokens()
 {
     bool keepGoing = true;
@@ -15,24 +24,19 @@ void GroggScript::Tokenizer::generateTokens()
         auto currentChar = *_it;
         switch (currentChar)
         {
-        case '(':
+        case '\0':
         {
-            _tokens.push_back({TokenType::OPEN_PARENTHESES, "("});
-            advance();
-            break;
+            logger.warn("Null char encountered, this is not expected.");
+            logger.debug("Null char at" + getLinePos());
         }
-        case ')':
-        {
-            _tokens.push_back({TokenType::CLOSE_PARENTHESES, ")"});
-            advance();
-            break;
-        }
-        case '.':
-        {
-            _tokens.push_back({TokenType::DOT, "."});
-            advance();
-            break;
-        }
+            SIMPLE_HANDLER('[', TokenType::OPEN_BRACKET)
+            SIMPLE_HANDLER(']', TokenType::CLOSE_BRACKET)
+            SIMPLE_HANDLER('{', TokenType::OPEN_CURLY_BRACE)
+            SIMPLE_HANDLER('}', TokenType::CLOSE_CURLY_BRACE)
+            SIMPLE_HANDLER('(', TokenType::OPEN_PARENTHESES)
+            SIMPLE_HANDLER(')', TokenType::CLOSE_PARENTHESES)
+            SIMPLE_HANDLER('.', TokenType::DOT)
+            SIMPLE_HANDLER(':', TokenType::COLON)
         case '+':
         {
             addOneOrDouble('+', TokenType::PLUS, TokenType::DOUBLE_PLUS);
@@ -76,6 +80,7 @@ void GroggScript::Tokenizer::generateTokens()
         }
         case '*':
             _tokens.push_back({TokenType::ASTERISK, "*"});
+            advance();
             break;
         case '<':
         {
@@ -130,9 +135,6 @@ void GroggScript::Tokenizer::generateTokens()
             _tokens.push_back({TokenType::STRING_VALUE, builder});
             break;
         }
-        case '\0':
-            logger.debug("Encountered end of string at" + getLinePos());
-            return;
         default:
         {
             if (isnumber(currentChar))
@@ -158,14 +160,13 @@ void GroggScript::Tokenizer::generateTokens()
                     }
                     processCharacter();
                 }
-                _tokens.push_back({TokenType::NUMBER, number});
-
+                const TokenType tokenType = decimalCount == 0 ? TokenType::INTEGER : TokenType::FLOAT;
+                _tokens.push_back({tokenType, number});
                 break;
             }
             else if (isalpha(currentChar) || currentChar == '_')
             {
                 logger.debug("Parsing symbol");
-
                 string working(1, currentChar);
                 auto next = advance();
 
@@ -189,6 +190,11 @@ void GroggScript::Tokenizer::generateTokens()
                     _tokens.push_back({TokenType::RESERVED_BOOLEAN_TYPE, working});
                     break;
                 }
+                else if (working == VAR_TYPE_KEYWORD)
+                {
+                    _tokens.push_back({TokenType::RESERVED_VAR_KEYWORD, working});
+                    break;
+                }
                 else if (working == "true")
                 {
                     _tokens.push_back({TokenType::TRUE, working});
@@ -206,4 +212,5 @@ void GroggScript::Tokenizer::generateTokens()
         }
         }
     }
+    _tokens.push_back({TokenType::END_OF_FILE, ""});
 }

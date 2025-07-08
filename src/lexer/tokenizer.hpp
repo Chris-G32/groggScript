@@ -19,6 +19,7 @@ namespace GroggScript
     public:
         Tokenizer(const string &rawString) : _rawString(rawString), _it(_rawString.cbegin()), _end(_rawString.cend()) {};
         void generateTokens();
+        const vector<Token> getTokens() const { return _tokens; }
         void debugPrint(std::ostream &out = std::cout)
         {
             for (const auto &token : _tokens)

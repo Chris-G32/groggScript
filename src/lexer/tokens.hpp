@@ -9,6 +9,8 @@ namespace GroggScript
 
     enum class TokenType
     {
+        // Token value representing null, not intended to store any data, gets around having to use pointer null bs.
+        NULL_TOKEN,
         // Mostly for arithmetic
         ASTERISK,
         FORWARD_SLASH,
@@ -19,7 +21,7 @@ namespace GroggScript
         DASH,
         PERCENT,
         DOT,
-
+        COLON,
         END_OF_FILE,
         // Mostly Booleans
         EXCLAMATION,
@@ -34,7 +36,8 @@ namespace GroggScript
         OR,
         AND,
         // Symbols and stuff
-        NUMBER,
+        INTEGER,
+        FLOAT,
         WHITE_SPACE,
         STRING_VALUE,
         SYMBOL,
@@ -48,7 +51,8 @@ namespace GroggScript
         RESERVED_STRING_TYPE,
         RESERVED_BOOLEAN_TYPE,
         TRUE,
-        FALSE
+        FALSE,
+        RESERVED_VAR_KEYWORD
     };
 
     struct Token
@@ -56,13 +60,15 @@ namespace GroggScript
         TokenType token;
         string value;
     };
-
+    const Token NULL_TOKEN = {TokenType::NULL_TOKEN, ""};
     inline string tokenTypeToString(TokenType type)
     {
         switch (type)
         {
         case TokenType::ASTERISK:
             return "asterisk";
+        case TokenType::COLON:
+            return "colon";
         case TokenType::FORWARD_SLASH:
             return "forward_slash";
         case TokenType::DOUBLE_FORWARD_SLASH:
@@ -103,8 +109,10 @@ namespace GroggScript
             return "and";
         case TokenType::DOT:
             return "dot";
-        case TokenType::NUMBER:
-            return "number";
+        case TokenType::INTEGER:
+            return "integer_literal";
+        case TokenType::FLOAT:
+            return "float_literal";
         case TokenType::WHITE_SPACE:
             return "white_space";
         case TokenType::RESERVED_INTEGER_TYPE:
@@ -135,6 +143,9 @@ namespace GroggScript
             return "open_parenthese";
         case TokenType::CLOSE_PARENTHESES:
             return "close_parenthese";
+        case TokenType::RESERVED_VAR_KEYWORD:
+            return "var";
+
         default:
             return "unknown_token";
         }

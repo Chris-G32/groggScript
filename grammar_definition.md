@@ -49,8 +49,8 @@ expression:
 | [symbol | primitive_value]
 variable_assignment: symbol assignment expression
 var_declaration: 
-| infer_type symbol type_specifier
 | infer_type symbol (type_specifier) assignment expression // Type specifier must match the primitive or symbols type
+| infer_type symbol type_specifier
 
 statement: 
 | var_declaration 
@@ -59,7 +59,8 @@ statement:
 statements: statement*
 
 a + b + c / 2 + b / c
-
+prog:
+statements EOF
 
 var a:string = "abcd" + "123"
 a = "123"+ "abcx" / "123"
