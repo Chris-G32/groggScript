@@ -48,13 +48,17 @@ expression:
 | [symbol | primitive_value] operator expression 
 | [symbol | primitive_value]
 variable_assignment: symbol assignment expression
+
+var_instantiation: infer_type symbol (type_specifier) assignment expression // Type specifier must match the primitive or symbols type
+
+
 var_declaration: 
-| infer_type symbol (type_specifier) assignment expression // Type specifier must match the primitive or symbols type
+| var_instantiation
 | infer_type symbol type_specifier
 
 statement: 
 | var_declaration 
-| variable_assignment
+| variable_assignment    
 | expression
 statements: statement*
 

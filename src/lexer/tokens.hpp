@@ -48,6 +48,7 @@ namespace GroggScript
         OPEN_CURLY_BRACE,
         CLOSE_CURLY_BRACE,
         RESERVED_INTEGER_TYPE,
+        RESERVED_FLOAT_TYPE,
         RESERVED_STRING_TYPE,
         RESERVED_BOOLEAN_TYPE,
         TRUE,
@@ -81,10 +82,8 @@ namespace GroggScript
             return "dash";
         case TokenType::PERCENT:
             return "percent";
-
         case TokenType::END_OF_FILE:
             return "end_of_file";
-
         case TokenType::EXCLAMATION:
             return "exclamation";
         case TokenType::EXCLAMATION_EQUALS:
@@ -117,6 +116,8 @@ namespace GroggScript
             return "white_space";
         case TokenType::RESERVED_INTEGER_TYPE:
             return "int";
+        case TokenType::RESERVED_FLOAT_TYPE:
+            return "float";
         case TokenType::RESERVED_STRING_TYPE:
             return "string";
         case TokenType::RESERVED_BOOLEAN_TYPE:
@@ -145,7 +146,6 @@ namespace GroggScript
             return "close_parenthese";
         case TokenType::RESERVED_VAR_KEYWORD:
             return "var";
-
         default:
             return "unknown_token";
         }

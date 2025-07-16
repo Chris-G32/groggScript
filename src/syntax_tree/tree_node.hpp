@@ -1,18 +1,17 @@
-class TreeNode
-{
-private:
-    /* data */
-public:
-    TreeNode();
-    ~TreeNode();
-};
+// class TreeNode
+// {
+// private:
+//     /* data */
+// public:
+//     TreeNode();
+//     ~TreeNode();
+// };
 
-TreeNode::TreeNode(/* args */)
-{
-}
+// TreeNode::TreeNode(/* args */)
+// {
+// }
 
-TreeNode::~TreeNode()
-{
-    
-}
+// TreeNode::~TreeNode()
+// {
 
+// }

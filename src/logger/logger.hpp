@@ -85,4 +85,7 @@ protected:
     std::ostream &_out;
     bool _debugEnabled;
 };
+#define DEBUG_LOG(val) GroggLog::get().debug(val);
+#define INFO_LOG(val) GroggLog::get().info(val);
+
 #endif
