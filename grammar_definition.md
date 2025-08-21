@@ -18,7 +18,6 @@ numeric: [0-9]
 alnum: alphabetical | numeric
 symbol_components: [ _ | alnum ]+
 symbol: 
-| alphabetical+
 | alphabetical alnum+
 | '_' alphabetical alnum*
 
