@@ -12,6 +12,7 @@ class AbstractAlphabetNodeVisitor {
     virtual void visitSymbol(class Symbol* node) = 0;
     virtual void visitPrimitiveValue(class PrimitiveValue* node) = 0;
     virtual void visitOperator(class Operator* node) = 0;
+    virtual void visitTerm(class Term* node) = 0;
 };
 
 class AbstractAlphabetNode {

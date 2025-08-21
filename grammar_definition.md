@@ -10,9 +10,12 @@
 
 # Basic Components
 dot: '.'
+comma: ','
 colon: ':'
 open_bracket: '['
 close_bracket: ']'
+open_parentheses: '('
+close_parenthese: ')'
 alphabetical: [a-zA-Z]
 numeric: [0-9]
 alnum: alphabetical | numeric
@@ -43,13 +46,25 @@ primitive_value:
 
 type_name: primitive_type | symbol
 type_specifier: colon type_name
-expression:
-| [symbol | primitive_value] operator expression 
-| [symbol | primitive_value]
+atom: 
+| symbol
+| primitive_value
+
+invocation: 
+| open_parentheses (atom ( comma atom )* ) close_parentheses
+single_operator: [ ++ | -- | ** | invocation]
+// single expr should allow for a()++++
+single_expr:
+| symbol single_operator+
+term:
+| single_expr
+| atom
+expression: term (operator term)*
+
+
 variable_assignment: symbol assignment expression
 
 var_instantiation: infer_type symbol (type_specifier) assignment expression // Type specifier must match the primitive or symbols type
-
 
 var_declaration: 
 | var_instantiation
