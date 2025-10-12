@@ -4,72 +4,72 @@
 #include <string>
 using std::string;
 
-namespace GroggScript
-{
+namespace GroggScript {
 
-    enum class TokenType
-    {
-        // Token value representing null, not intended to store any data, gets around having to use pointer null bs.
-        NULL_TOKEN,
-        // Mostly for arithmetic
-        ASTERISK,
-        FORWARD_SLASH,
-        DOUBLE_FORWARD_SLASH,
-        COMMENT,
-        PLUS,
-        DOUBLE_PLUS,
-        DASH,
-        PERCENT,
-        DOT,
-        COLON,
-        END_OF_FILE,
-        // Mostly Booleans
-        EXCLAMATION,
-        EXCLAMATION_EQUALS,
-        LESS_THAN,
-        GREATER_THAN,
-        EQUALS,
-        DOUBLE_EQUALS,
-        LESS_THAN_EQUALS,
-        GREATER_THAN_EQUALS,
-        PIPE,
-        OR,
-        AND,
-        // Symbols and stuff
-        INTEGER,
-        FLOAT,
-        WHITE_SPACE,
-        STRING_VALUE,
-        SYMBOL,
-        OPEN_BRACKET,
-        CLOSE_BRACKET,
-        OPEN_PARENTHESES,
-        CLOSE_PARENTHESES,
-        OPEN_CURLY_BRACE,
-        CLOSE_CURLY_BRACE,
-        RESERVED_INTEGER_TYPE,
-        RESERVED_FLOAT_TYPE,
-        RESERVED_STRING_TYPE,
-        RESERVED_BOOLEAN_TYPE,
-        TRUE,
-        FALSE,
-        RESERVED_VAR_KEYWORD
-    };
+enum class TokenType {
+    // Token value representing null, not intended to store any data, gets
+    // around having to use pointer null bs.
+    NULL_TOKEN,
+    // Mostly for arithmetic
+    ASTERISK,
+    FORWARD_SLASH,
+    DOUBLE_FORWARD_SLASH,
+    COMMENT,
+    PLUS,
+    DOUBLE_DASH,
+    DOUBLE_PLUS,
+    DASH,
+    PERCENT,
+    DOT,
+    COLON,
+    SEMICOLON,
+    END_OF_FILE,
+    // Mostly Booleans
+    EXCLAMATION,
+    EXCLAMATION_EQUALS,
+    LESS_THAN,
+    GREATER_THAN,
+    EQUALS,
+    DOUBLE_EQUALS,
+    LESS_THAN_EQUALS,
+    GREATER_THAN_EQUALS,
+    PIPE,
+    OR,
+    AND,
+    // Symbols and stuff
+    INTEGER,
+    FLOAT,
+    WHITE_SPACE,
+    STRING_VALUE,
+    SYMBOL,
+    OPEN_BRACKET,
+    CLOSE_BRACKET,
+    OPEN_PARENTHESES,
+    CLOSE_PARENTHESES,
+    OPEN_CURLY_BRACE,
+    CLOSE_CURLY_BRACE,
+    RESERVED_INTEGER_TYPE,
+    RESERVED_FLOAT_TYPE,
+    RESERVED_STRING_TYPE,
+    RESERVED_BOOLEAN_TYPE,
+    TRUE,
+    FALSE,
+    RESERVED_VAR_KEYWORD
+};
 
-    struct Token
-    {
-        TokenType token;
-        string value;
-    };
-    const Token NULL_TOKEN = {TokenType::NULL_TOKEN, ""};
-    inline string tokenTypeToString(TokenType type)
-    {
-        switch (type)
-        {
+struct Token {
+    TokenType token;
+    string value;
+};
+const Token NULL_TOKEN = {TokenType::NULL_TOKEN, ""};
+inline string tokenTypeToString(TokenType type) {
+    switch (type) {
         case TokenType::ASTERISK:
             return "asterisk";
         case TokenType::COLON:
             return "colon";
+        case TokenType::SEMICOLON:
+            return "semicolon";
         case TokenType::FORWARD_SLASH:
             return "forward_slash";
         case TokenType::DOUBLE_FORWARD_SLASH:
@@ -78,6 +78,8 @@ namespace GroggScript
             return "plus";
         case TokenType::DOUBLE_PLUS:
             return "double_plus";
+        case TokenType::DOUBLE_DASH:
+            return "double_dash";
         case TokenType::DASH:
             return "dash";
         case TokenType::PERCENT:
@@ -148,9 +150,9 @@ namespace GroggScript
             return "var";
         default:
             return "unknown_token";
-        }
     }
-
 }
+
+}  // namespace GroggScript
 
 #endif

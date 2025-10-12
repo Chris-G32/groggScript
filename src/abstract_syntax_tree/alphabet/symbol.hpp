@@ -6,9 +6,9 @@ namespace GSAlphabet {
 
 class Symbol : public AbstractAlphabetNode {
    public:
-   Symbol() {}
-   virtual void accept(AbstractAlphabetNodeVisitor* visitor) override;
-   std::string name;
+    Symbol(const std::string& identifier) : identifier(identifier) {}
+    void accept(AbstractAlphabetNodeVisitor* visitor) override;
+    std::string identifier;
 };
 
 inline void Symbol::accept(AbstractAlphabetNodeVisitor* visitor) {

@@ -12,7 +12,8 @@
 
 #include "./lexer/tokenizer.hpp"
 #include "./logger/logger.hpp"
-#include "./syntax_tree/parser/parser.hpp"
+#include "./parser/gs_parser.hpp"
+#include "abstract_syntax_tree/printer_visitor.hpp"
 volatile sig_atomic_t g_signal_status;
 typedef std::__1::vector<GroggScript::Token>::const_iterator tokenIterator;
 
@@ -177,9 +178,10 @@ int main(int argc, char **argv) {
         tokenizer.generateTokens();
         logger.info("Tokens generated successfully.");
         logger.info("Generating AST...");
-        Parser parser(tokenizer.getTokens());
-        parser.generateAST();
-
+        GsParser parser(tokenizer.getTokens());
+        auto prog = parser.program();
+        PrinterVisitor vis;
+        vis.visit(prog.get());
     } catch (const std::runtime_error &e) {
         logger.warn("Error in token parsing: " + std::string(e.what()) + "at " +
                     tokenizer.getLinePos());
