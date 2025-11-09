@@ -2,9 +2,10 @@
 
 #include <cassert>
 
-#include "../abstract_syntax_tree/alphabet/binary_expression.hpp"
-#include "../abstract_syntax_tree/alphabet/symbol.hpp"
-#include "../abstract_syntax_tree/alphabet/unary_expression.hpp"
+#include "../concrete_syntax_tree/alphabet/binary_expression.hpp"
+#include "../concrete_syntax_tree/alphabet/function_declaration.hpp"
+#include "../concrete_syntax_tree/alphabet/symbol.hpp"
+#include "../concrete_syntax_tree/alphabet/unary_expression.hpp"
 
 using namespace GSAlphabet;
 using std::unique_ptr;
@@ -18,21 +19,25 @@ unique_ptr<Statements> GsParser::statements() {
     while (!end()) {
         if (auto stmt = statement(); stmt != nullptr) {
             statements.push_back(std::move(stmt));
+            continue;
         }
+        break;
     }
     return std::make_unique<Statements>(std::move(statements));
 }
 unique_ptr<Statement> GsParser::statement() {
     std::unique_ptr<Statement> stmt = nullptr;
+
     if (auto varDecl = variableDeclaration(); varDecl != nullptr) {
         stmt = std::make_unique<Statement>(std::move(varDecl));
     } else if (auto varAssign = variableAssignment(); varAssign != nullptr) {
         stmt = std::make_unique<Statement>(std::move(varAssign));
     } else if (auto expr = expression(); expr != nullptr) {
         stmt = std::make_unique<Statement>(std::move(expr));
-    }
-    if (stmt == nullptr) {
-        throw std::runtime_error("Encountered invalid statement.");
+    } else if (auto funcDecl = functionDeclaration(); funcDecl != nullptr) {
+        return std::make_unique<Statement>(std::move(funcDecl));
+    } else {
+        return nullptr;
     }
     expect(TokenType::SEMICOLON);
     return stmt;
@@ -93,16 +98,27 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
 
         return term();
     };
+
     auto postfixExpr =
         [this, primaryExpression]() -> unique_ptr<AbstractAlphabetNode> {
         auto expr = primaryExpression();
         if (expr == nullptr) {
             return nullptr;
         }
-        while (auto op = getUnaryOperator(_current->token)) {
+        if (auto op = getUnaryOperator(_current->token)) {
             expr =
                 std::make_unique<UnaryExpression>(std::move(expr), op.value());
-            advance();
+        } else if (accept(TokenType::OPEN_PARENTHESES)) {
+            std::vector<std::unique_ptr<AbstractAlphabetNode>> args;
+            while (auto param = expression()) {
+                args.push_back(std::move(param));
+                if (accept(TokenType::CLOSE_PARENTHESES)) {
+                    break;
+                }
+                expect(TokenType::COMMA);
+            }
+            expr = std::make_unique<CallExpression>(std::move(expr),
+                                                    std::move(args));
         }
         return expr;
     };
@@ -280,4 +296,87 @@ unique_ptr<Symbol> GsParser::symbol() {
     auto sym = std::make_unique<Symbol>(_current->value);
     advance();
     return sym;
+}
+std::unique_ptr<GSAlphabet::VariableDeclaration>
+GsParser::variableDeclaration() {
+    if (!accept(TokenType::RESERVED_VAR_KEYWORD)) {
+        return nullptr;
+    }
+
+    auto identifier = expect(TokenType::SYMBOL).value;
+    if (auto typeSpec = typeSpecifier()) {
+        auto initializer = accept(TokenType::EQUALS) ? expression() : nullptr;
+        return std::make_unique<VariableDeclaration>(identifier, typeSpec,
+                                                     std::move(initializer));
+    }
+    // If we don't specify a type in declaration, you must initialize it.
+    expect(TokenType::EQUALS);
+    return std::make_unique<VariableDeclaration>(identifier, expression());
+}
+std::unique_ptr<GSAlphabet::VariableAssignment> GsParser::variableAssignment() {
+    if (auto twoAhead = std::next(_current, 2);
+        twoAhead->token != TokenType::EQUALS) {
+        return nullptr;
+    }
+    auto symbolName = expect(TokenType::SYMBOL);
+    expect(TokenType::EQUALS);
+    if (auto expr = expression(); expr == nullptr) {
+        return std::make_unique<VariableAssignment>(std::move(symbolName.value),
+                                                    expression());
+    }
+    throw std::runtime_error(
+        "Expected an expression after assignment operator. ");
+}
+std::unique_ptr<GSAlphabet::FunctionDeclaration>
+GsParser::functionDeclaration() {
+    if (!accept(TokenType::FUNCTION_MARKER)) {
+        return nullptr;
+    }
+    auto functionName = expect(TokenType::SYMBOL);
+    expect(TokenType::OPEN_PARENTHESES);
+    std::vector<FunctionParameter> parameters;
+    do {
+        auto argName = &_current->value;
+        if (!accept(TokenType::SYMBOL)) {
+            break;
+        }
+        if (auto typeSpec = typeSpecifier(); typeSpec != std::nullopt) {
+            parameters.push_back({.name = *argName, .type = typeSpec.value()});
+            continue;
+        }
+        throw std::runtime_error(
+            "Expected a typeSpecifier in function declaration for "
+            "argument" +
+            *argName);
+    } while (accept(TokenType::COMMA));
+    expect(TokenType::CLOSE_PARENTHESES);
+    std::optional<std::string> returnType = std::nullopt;
+    if (accept(TokenType::DASH)) {
+        expect(TokenType::GREATER_THAN);
+        returnType = expect(TokenType::SYMBOL).value;
+    }
+    expect(TokenType::OPEN_CURLY_BRACE);
+    auto decl = std::make_unique<FunctionDeclaration>(statements(), parameters,
+                                                      returnType);
+    expect(TokenType::CLOSE_CURLY_BRACE);
+    return decl;
+}
+std::optional<std::string> GsParser::typeSpecifier() {
+    if (accept(TokenType::COLON)) {
+        switch (_current->token) {
+            case TokenType::RESERVED_BOOLEAN_TYPE:
+            case TokenType::RESERVED_INTEGER_TYPE:
+            case TokenType::RESERVED_FLOAT_TYPE:
+            case TokenType::RESERVED_STRING_TYPE:
+            case TokenType::SYMBOL: {
+                auto typeName = _current->value;
+                advance();
+                return typeName;
+            }
+            default: {
+                throw std::runtime_error("Invalid type specifier.");
+            }
+        }
+    }
+    return std::nullopt;
 }

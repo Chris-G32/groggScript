@@ -1,20 +1,28 @@
 #pragma once
 #include <string>
+#include <utility>
 
 #include "abstract_alphabet_node.hpp"
-
+#include "optional"
 namespace GSAlphabet {
 
 class VariableDeclaration : public AbstractAlphabetNode {
    public:
-    VariableDeclaration(
-        const std::string& type, const std::string& identifier,
+    explicit VariableDeclaration(
+        std::string identifier,
         std::unique_ptr<AbstractAlphabetNode> initializer = nullptr)
-        : type(type),
-          identifier(identifier),
+        : VariableDeclaration(std::move(identifier), std::nullopt,
+                              std::move(initializer)) {}
+
+    explicit VariableDeclaration(
+        std::string identifier, std::optional<std::string> type,
+        std::unique_ptr<AbstractAlphabetNode> initializer = nullptr)
+        : type(std::move(type)),
+          identifier(std::move(identifier)),
           initializer(std::move(initializer)) {}
+
     void accept(AbstractAlphabetNodeVisitor* visitor) override;
-    std::string type;
+    std::optional<std::string> type;
     std::string identifier;
     std::unique_ptr<AbstractAlphabetNode> initializer;
 };

@@ -13,7 +13,8 @@
 #include "./lexer/tokenizer.hpp"
 #include "./logger/logger.hpp"
 #include "./parser/gs_parser.hpp"
-#include "abstract_syntax_tree/printer_visitor.hpp"
+#include "concrete_syntax_tree/printer_visitor.hpp"
+#include "interpreter/interpreter_visitor.hpp"
 volatile sig_atomic_t g_signal_status;
 typedef std::__1::vector<GroggScript::Token>::const_iterator tokenIterator;
 
@@ -130,6 +131,8 @@ void generateAST(const std::vector<Token> &tokens) {
     parseProgram(val);
 }
 int main(int argc, char **argv) {
+    srand(time(nullptr));  // NOLINT(*-msc51-cpp) Temporary for generating some
+                           // random values as expr results
     if (argc < 2) {
         std::cerr << "Please specify a path to a file to tokenize."
                   << std::endl;
@@ -182,9 +185,16 @@ int main(int argc, char **argv) {
         auto prog = parser.program();
         PrinterVisitor vis;
         vis.visit(prog.get());
+        logger.info("AST printed...");
+        logger.info("Interpreter starting...");
+        GsInterpreter::InterpreterVisitor interpreter;
+        interpreter.visit(prog.get());
+        logger.info("Interpreter ended...");
+        // for (const auto &out : interpreter.outputs) {
+        //     logger.log(INFO, GSAlphabet::to_string(
+        //                          std::get<GSAlphabet::Primitive>(out)));
+        // }
     } catch (const std::runtime_error &e) {
-        logger.warn("Error in token parsing: " + std::string(e.what()) + "at " +
-                    tokenizer.getLinePos());
         std::cout << "Finished Generating With Errors\n"
                   << e.what() << std::endl;
     } catch (std::exception &e) {

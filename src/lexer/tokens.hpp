@@ -10,6 +10,7 @@ enum class TokenType {
     // Token value representing null, not intended to store any data, gets
     // around having to use pointer null bs.
     NULL_TOKEN,
+    FUNCTION_MARKER,  // fn
     // Mostly for arithmetic
     ASTERISK,
     FORWARD_SLASH,
@@ -21,6 +22,7 @@ enum class TokenType {
     DASH,
     PERCENT,
     DOT,
+    DOUBLE_DOT,
     COLON,
     SEMICOLON,
     END_OF_FILE,
@@ -42,6 +44,7 @@ enum class TokenType {
     WHITE_SPACE,
     STRING_VALUE,
     SYMBOL,
+    COMMA,
     OPEN_BRACKET,
     CLOSE_BRACKET,
     OPEN_PARENTHESES,

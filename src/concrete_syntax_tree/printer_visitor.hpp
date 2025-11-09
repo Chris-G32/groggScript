@@ -4,6 +4,7 @@
 
 #include "alphabet/abstract_alphabet_node.hpp"
 #include "alphabet/binary_expression.hpp"
+#include "alphabet/function_declaration.hpp"
 #include "alphabet/literal.hpp"
 #include "alphabet/program.hpp"
 #include "alphabet/statement.hpp"
@@ -25,7 +26,7 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
     }
     void visitProgram(Program* node) override {
         printNodeName("program");
-        printChild("statements", node->statements);
+        visit(node->statements.get());
     }
     void visitStatements(Statements* node) override {
         printNodeName("statements");
@@ -39,7 +40,9 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
     }
     void visitVariableDeclaration(VariableDeclaration* node) override {
         printNodeName("variable_declaration");
-        printChild("type", node->type);
+        if (node->type) {
+            printChild("type", *node->type);
+        }
         printChild("identifier", node->identifier);
         if (node->initializer != nullptr) {
             printChild("initializer", node->initializer);
@@ -66,33 +69,53 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
         printChild("identifier", node->identifier);
     };
     void visitLiteral(Literal* node) override {
-        auto printLiteral = [this, &node](const std::string& type) {
-            printChild("type", type);
-            printChild("value", to_string(node->literal));
-        };
         printNodeName("literal");
-        switch (node->literal.type) {
-            case BOOLEAN:
-                printLiteral("boolean");
-                break;
-            case FLOAT:
-                printLiteral("float");
-                break;
-            case INTEGER:
-                printLiteral("integer");
-                break;
-            case STRING:
-                printLiteral("string");
-                break;
-            default:
-                printChild("invalid_literal", "invalid_literal");
+        std::visit(
+            [this](const auto& arg) {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, decimal>) {
+                    printChild("type", "float");
+                } else if constexpr (std::is_same_v<T, text>) {
+                    printChild("type", "string");
+                } else if constexpr (std::is_same_v<T, integer>) {
+                    printChild("type", "integer");
+                } else if constexpr (std::is_same_v<T, boolean>) {
+                    printChild("type", "boolean");
+                } else {
+                    printChild("type", "unknown");
+                    printChild("value", "unknown");
+                    return;
+                }
+                printChild("value", to_string(arg));
+            },
+            node->literal);
+    }
+    void visitCallExpression(CallExpression* node) override {
+        printNodeName("call_expression");
+        printChild("callee", node->callee);
+        auto count = 1;
+        for (auto& arg : node->arguments) {
+            printChild("arg" + std::to_string(count++), arg);
         }
     }
-    void visitOperator(Operator* node) override {};
     void visitTerm(Term* node) override {
         printNodeName("term");
         visit(node->term.get());
     };
+    void visitFunctionDeclaration(FunctionDeclaration* node) override {
+        printNodeName("function_declaration");
+        printChild("body", node->body);
+        printTabDepth();
+        std::cout << "parameters\n";
+        desc();
+        for (const auto& arg : node->arguments) {
+            printChild("name", arg.name);
+            printChild("type", arg.type);
+        }
+        asc();
+        printChild("return_type",
+                   node->returnType.value_or("no_type_provided"));
+    }
 
    private:
     int _tabSize;
@@ -127,6 +150,7 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
             std::cout << ' ';
         }
     }
+
     // Init to this so first program call results in no indentation
     int depth = -1;
 };

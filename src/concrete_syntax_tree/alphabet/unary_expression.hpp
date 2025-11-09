@@ -1,6 +1,5 @@
 #pragma once
 #pragma once
-#include "abstract_expression.hpp"
 #include "symbol.hpp"
 namespace GSAlphabet {
 enum UnaryOperator { INVOCATION, INCREMENT, DECREMENT, LOGICAL_NOT };
@@ -18,7 +17,7 @@ inline std::string toString(const UnaryOperator op) {
             return "UNKNOWN";
     }
 }
-class UnaryExpression : public AbstractExpression {
+class UnaryExpression : public AbstractAlphabetNode {
    public:
     UnaryExpression(std::unique_ptr<AbstractAlphabetNode> node,
                     const UnaryOperator op)

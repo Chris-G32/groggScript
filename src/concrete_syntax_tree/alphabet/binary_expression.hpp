@@ -1,6 +1,5 @@
 #pragma once
 #include "abstract_alphabet_node.hpp"
-#include "abstract_expression.hpp"
 #include "symbol.hpp"
 namespace GSAlphabet {
 enum BinaryOperator {
@@ -48,7 +47,7 @@ inline std::string toString(const BinaryOperator op) {
     }
 }
 
-class BinaryExpression : public AbstractExpression {
+class BinaryExpression : public AbstractAlphabetNode {
    public:
     BinaryExpression(std::unique_ptr<AbstractAlphabetNode> lhs,
                      const BinaryOperator op,

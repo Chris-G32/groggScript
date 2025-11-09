@@ -5,7 +5,7 @@ var num3=3.0
 190
 110
 10000000000
-function fooName (int a , string b , nullable bool c) -> type {
+fn fooName (a:int , b:int , c: nullable bool) -> type {
 
 }
 (value:int)->type

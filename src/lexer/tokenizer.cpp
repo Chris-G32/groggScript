@@ -9,6 +9,7 @@
 #define INTEGER_TYPE_KEYWORD "int"
 #define BOOLEAN_TYPE_KEYWORD "bool"
 #define VAR_TYPE_KEYWORD "var"
+#define FN_KEYWORD "fn"
 #define SIMPLE_HANDLER(ch, tokenType)                       \
     case ch: {                                              \
         _tokens.push_back({tokenType, std::string(1, ch)}); \
@@ -32,12 +33,15 @@ void GroggScript::Tokenizer::generateTokens() {
                 SIMPLE_HANDLER('}', TokenType::CLOSE_CURLY_BRACE)
                 SIMPLE_HANDLER('(', TokenType::OPEN_PARENTHESES)
                 SIMPLE_HANDLER(')', TokenType::CLOSE_PARENTHESES)
-                SIMPLE_HANDLER('.', TokenType::DOT)
                 SIMPLE_HANDLER(':', TokenType::COLON)
                 SIMPLE_HANDLER(';', TokenType::SEMICOLON)
-
+                SIMPLE_HANDLER(',', TokenType::COMMA)
             case '+': {
                 addOneOrDouble('+', TokenType::PLUS, TokenType::DOUBLE_PLUS);
+                break;
+            }
+            case '.': {
+                addOneOrDouble('.', TokenType::DOT, TokenType::DOUBLE_DOT);
                 break;
             }
             case '-': {
@@ -178,6 +182,10 @@ void GroggScript::Tokenizer::generateTokens() {
                         break;
                     } else if (working == "false") {
                         _tokens.push_back({TokenType::FALSE, working});
+                        break;
+                    } else if (working == FN_KEYWORD) {
+                        _tokens.push_back(
+                            {TokenType::FUNCTION_MARKER, working});
                         break;
                     }
                     _tokens.push_back({TokenType::SYMBOL, working});

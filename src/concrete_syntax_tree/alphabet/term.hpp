@@ -1,10 +1,5 @@
 #pragma once
-#include <cassert>
-
 #include "abstract_alphabet_node.hpp"
-#include "literal.hpp"
-#include "symbol.hpp"
-#include "unary_expression.hpp"
 
 namespace GSAlphabet {
 class Term : public AbstractAlphabetNode {

@@ -1,11 +1,11 @@
 #pragma once
-#include "../abstract_syntax_tree/alphabet/abstract_expression.hpp"
-#include "../abstract_syntax_tree/alphabet/program.hpp"
-#include "../abstract_syntax_tree/alphabet/statement.hpp"
-#include "../abstract_syntax_tree/alphabet/statements.hpp"
-#include "../abstract_syntax_tree/alphabet/term.hpp"
-#include "../abstract_syntax_tree/alphabet/variable_assignment.hpp"
-#include "../abstract_syntax_tree/alphabet/variable_declaration.hpp"
+#include "../concrete_syntax_tree/alphabet/call_expression.hpp"
+#include "../concrete_syntax_tree/alphabet/program.hpp"
+#include "../concrete_syntax_tree/alphabet/statement.hpp"
+#include "../concrete_syntax_tree/alphabet/statements.hpp"
+#include "../concrete_syntax_tree/alphabet/term.hpp"
+#include "../concrete_syntax_tree/alphabet/variable_assignment.hpp"
+#include "../concrete_syntax_tree/alphabet/variable_declaration.hpp"
 #include "../lexer/lexer.h"
 
 class GsParser {
@@ -21,24 +21,23 @@ class GsParser {
     std::unique_ptr<GSAlphabet::Term> term();
     std::unique_ptr<GSAlphabet::Literal> literal();
     std::unique_ptr<GSAlphabet::Symbol> symbol();
-    // std::unique_ptr<GSAlphabet::UnaryExpression> unaryExpression();
-    // std::unique_ptr<GSAlphabet::BinaryExpression> binaryExpression();
-    std::unique_ptr<GSAlphabet::VariableDeclaration> variableDeclaration() {
-        return nullptr;
-    };
-    std::unique_ptr<GSAlphabet::VariableAssignment> variableAssignment() {
-        return nullptr;
-    }
+    std::unique_ptr<GSAlphabet::VariableDeclaration> variableDeclaration();
+    std::unique_ptr<GSAlphabet::VariableAssignment> variableAssignment();
+    std::unique_ptr<GSAlphabet::FunctionDeclaration> functionDeclaration();
+    std::optional<std::string> typeSpecifier();
 
    protected:
     /**
      * Expects a token and advances the stream if encountered, throws otherwise.
      * @param expected Expected token
      */
-    void expect(const TokenType expected) {
+    auto expect(const TokenType expected) {
+        const auto tmp = *_current;
         if (!accept(expected)) {
-            throw std::runtime_error("Unexpected token received.");
+            throw std::runtime_error("Unexpected token received. Expected " +
+                                     tokenTypeToString(expected));
         }
+        return tmp;
     }
 
     /**

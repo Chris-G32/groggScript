@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "abstract_alphabet_node.hpp"
-#include "abstract_expression.hpp"
+#include "call_expression.hpp"
 
 namespace GSAlphabet {
 

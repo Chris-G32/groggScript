@@ -1,11 +1,6 @@
-var a=123
-var b="123"
-var a:string="string"
-int b= 111
-var a:string=""
-a+b
-
-// Statement
-*
-*
-asdfghjklzxcvbnm
+var prefix="poopydoopy";
+var suffix="pants";
+print(prefix+ " " + suffix);
+print(prefix+ " " + suffix);
+print(prefix+ " " + suffix);
+print(prefix+ " " + suffix);print(prefix+ " " + suffix);print(prefix+ " " + suffix);print(prefix+ " " + suffix);
