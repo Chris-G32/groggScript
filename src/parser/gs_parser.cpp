@@ -1,9 +1,8 @@
 #include "gs_parser.hpp"
 
-#include <cassert>
-
 #include "../concrete_syntax_tree/alphabet/binary_expression.hpp"
 #include "../concrete_syntax_tree/alphabet/function_declaration.hpp"
+#include "../concrete_syntax_tree/alphabet/literal.hpp"
 #include "../concrete_syntax_tree/alphabet/symbol.hpp"
 #include "../concrete_syntax_tree/alphabet/unary_expression.hpp"
 
@@ -251,7 +250,7 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
 //     }
 // }
 
-unique_ptr<Term> GsParser::term() {
+unique_ptr<AbstractAlphabetNode> GsParser::term() {
     unique_ptr<AbstractAlphabetNode> node = nullptr;
     // Check if symbol first bc less expensive
     if (auto sym = symbol(); sym != nullptr) {
@@ -261,7 +260,7 @@ unique_ptr<Term> GsParser::term() {
     } else {
         return nullptr;
     }
-    return std::make_unique<Term>(std::move(node));
+    return std::move(node);
 }
 unique_ptr<Literal> GsParser::literal() {
     const auto& token = _current->token;
@@ -314,15 +313,15 @@ GsParser::variableDeclaration() {
     return std::make_unique<VariableDeclaration>(identifier, expression());
 }
 std::unique_ptr<GSAlphabet::VariableAssignment> GsParser::variableAssignment() {
-    if (auto twoAhead = std::next(_current, 2);
+    if (auto twoAhead = std::next(_current, 1);
         twoAhead->token != TokenType::EQUALS) {
         return nullptr;
     }
     auto symbolName = expect(TokenType::SYMBOL);
     expect(TokenType::EQUALS);
-    if (auto expr = expression(); expr == nullptr) {
+    if (auto expr = expression(); expr != nullptr) {
         return std::make_unique<VariableAssignment>(std::move(symbolName.value),
-                                                    expression());
+                                                    std::move(expr));
     }
     throw std::runtime_error(
         "Expected an expression after assignment operator. ");
@@ -332,7 +331,7 @@ GsParser::functionDeclaration() {
     if (!accept(TokenType::FUNCTION_MARKER)) {
         return nullptr;
     }
-    auto functionName = expect(TokenType::SYMBOL);
+    auto functionName = expect(TokenType::SYMBOL).value;
     expect(TokenType::OPEN_PARENTHESES);
     std::vector<FunctionParameter> parameters;
     do {
@@ -353,11 +352,14 @@ GsParser::functionDeclaration() {
     std::optional<std::string> returnType = std::nullopt;
     if (accept(TokenType::DASH)) {
         expect(TokenType::GREATER_THAN);
-        returnType = expect(TokenType::SYMBOL).value;
+        // For now we will just take whatever is here instead of expecting a
+        // symbol
+        returnType = _current->value;
+        advance();
     }
     expect(TokenType::OPEN_CURLY_BRACE);
-    auto decl = std::make_unique<FunctionDeclaration>(statements(), parameters,
-                                                      returnType);
+    auto decl = std::make_unique<FunctionDeclaration>(functionName, parameters,
+                                                      statements(), returnType);
     expect(TokenType::CLOSE_CURLY_BRACE);
     return decl;
 }

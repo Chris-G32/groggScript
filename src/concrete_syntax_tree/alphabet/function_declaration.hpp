@@ -2,6 +2,7 @@
 #define GROGGSCRIPT_FUNCTION_DECLARATION_HPP
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "abstract_alphabet_node.hpp"
@@ -17,17 +18,20 @@ struct FunctionParameter {
 
 class FunctionDeclaration : public AbstractAlphabetNode {
    public:
-    explicit FunctionDeclaration(std::unique_ptr<AbstractAlphabetNode> body)
-        : FunctionDeclaration(std::move(body), {}) {}
-    FunctionDeclaration(std::unique_ptr<AbstractAlphabetNode> body,
-                        std::vector<FunctionParameter> args,
+    explicit FunctionDeclaration(const std::string& name,
+                                 std::unique_ptr<AbstractAlphabetNode> body)
+        : FunctionDeclaration(name, {}, std::move(body)) {}
+    FunctionDeclaration(std::string name, std::vector<FunctionParameter> args,
+                        std::unique_ptr<AbstractAlphabetNode> body,
                         std::optional<string> returnType = std::nullopt)
         : body(std::move(body)),
           arguments(std::move(args)),
-          returnType(std::move(returnType)) {}
+          returnType(std::move(returnType)),
+          name(std::move(name)) {}
     void accept(AbstractAlphabetNodeVisitor* visitor) override {
         visitor->visitFunctionDeclaration(this);
     };
+    std::string name;
     std::unique_ptr<AbstractAlphabetNode> body;
     std::vector<FunctionParameter> arguments;
     std::optional<std::string> returnType;

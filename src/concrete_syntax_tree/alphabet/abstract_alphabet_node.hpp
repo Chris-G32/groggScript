@@ -14,7 +14,6 @@ class AbstractAlphabetNodeVisitor {
     virtual void visitUnaryExpression(class UnaryExpression* node) = 0;
     virtual void visitSymbol(class Symbol* node) = 0;
     virtual void visitLiteral(class Literal* node) = 0;
-    virtual void visitTerm(class Term* node) = 0;
     virtual void visitFunctionDeclaration(class FunctionDeclaration* node) = 0;
     virtual ~AbstractAlphabetNodeVisitor() = default;
 };

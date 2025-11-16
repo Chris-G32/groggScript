@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <iostream>
 #include <ostream>
+#include <sstream>
 #include <unordered_map>
+#include <variant>
 
 #include "../concrete_syntax_tree/alphabet/binary_expression.hpp"
 #include "../concrete_syntax_tree/alphabet/call_expression.hpp"
@@ -12,7 +14,6 @@
 #include "../concrete_syntax_tree/alphabet/program.hpp"
 #include "../concrete_syntax_tree/alphabet/statement.hpp"
 #include "../concrete_syntax_tree/alphabet/statements.hpp"
-#include "../concrete_syntax_tree/alphabet/term.hpp"
 #include "../concrete_syntax_tree/alphabet/variable_assignment.hpp"
 #include "../concrete_syntax_tree/alphabet/variable_declaration.hpp"
 #include "../concrete_syntax_tree/printer_visitor.hpp"
@@ -25,7 +26,6 @@ using GSAlphabet::Program;
 using GSAlphabet::Statement;
 using GSAlphabet::Statements;
 using GSAlphabet::Symbol;
-using GSAlphabet::Term;
 using GSAlphabet::UnaryExpression;
 using GSAlphabet::VariableAssignment;
 using GSAlphabet::VariableDeclaration;
@@ -100,9 +100,32 @@ InterpreterVisitor::InterpreterVisitor() {
         std::cout << std::get<text>(std::get<Primitive>(args[0]));
         return std::nullopt;
     };
+    auto toStr = [](std::vector<GsValue>& args) -> std::optional<GsValue> {
+        return std::visit(
+            []<typename T0>(T0& val) {
+                using T = std::decay_t<T0>;
+                if constexpr (std::is_same_v<T, Primitive>) {
+                    return std::visit(
+                        [](auto& prim) -> GsValue {
+                            std::ostringstream oss;
+                            oss << std::boolalpha << prim;
+                            return oss.str();
+                        },
+                        val);
+
+                } else {
+                    GsValue retVal = "Function or sum bs";
+                    return retVal;
+                }
+            },
+            args[0]);
+    };
     AbstractGsFunction* print = new GsNativeFunction(
         "print", {{"text", "string"}}, "string", printImpl);
     _environment._globals.emplace("print", print);
+    _environment._globals.emplace(
+        "toString",
+        new GsNativeFunction("toString", {{"val", "string"}}, "string", toStr));
 }
 void InterpreterVisitor::visitProgram(Program* node) {
     visit(node->statements.get());
@@ -131,7 +154,7 @@ void InterpreterVisitor::visitVariableAssignment(VariableAssignment* node) {
         throw std::runtime_error(
             "Expected an evaluatable expression as the rhs");
     }
-    _environment.assignVariable(node->identifier, exprResult.value());
+    _environment.assignVariable(node->identifier, exprResult);
 }
 void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
     visit(node->left.get());
@@ -175,7 +198,6 @@ void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
         case BinaryOperator::MULTIPLY:
             break;
     }
-    outputs.push_back(_exprResult.value());
 }
 void InterpreterVisitor::visitUnaryExpression(UnaryExpression* node) {}
 void InterpreterVisitor::visitSymbol(Symbol* node) {
@@ -184,24 +206,19 @@ void InterpreterVisitor::visitSymbol(Symbol* node) {
 void InterpreterVisitor::visitLiteral(Literal* node) {
     _exprResult = std::make_optional(node->literal);
 }
-// this bit here is leaky from the parsing phase
-void InterpreterVisitor::visitTerm(Term* node) { visit(node->term.get()); }
-
 const std::optional<GsValue> InterpreterVisitor::popExpressionResult() {
     auto tmp = _exprResult;
     _exprResult = std::nullopt;
     return tmp;
 }
 void InterpreterVisitor::visitCallExpression(CallExpression* node) {
-    std::string identifier;
-    try {
-        auto term = dynamic_cast<Term*>(node->callee.get());
-        Symbol* sym = dynamic_cast<Symbol*>(term->term.get());
-        identifier = sym->identifier;
-    } catch (std::bad_cast& e) {
-        std::cerr << e.what() << std::endl;
+    const auto sym = dynamic_cast<Symbol*>(node->callee.get());
+    if (sym == nullptr) {
+        std::cerr << "Encountered unsupported call expression\n";
         return;
     }
+    const std::string identifier = sym->identifier;
+
     if (const auto& foo = _environment._globals.find(identifier);
         foo != _environment._globals.end()) {
         std::vector<GsValue> args;
@@ -209,9 +226,14 @@ void InterpreterVisitor::visitCallExpression(CallExpression* node) {
             visit(arg.get());
             args.push_back(popExpressionResult().value());
         }
-        std::get<AbstractGsFunction*>(*foo->second)->call(this, args);
+        _exprResult =
+            std::get<AbstractGsFunction*>(*foo->second)->call(this, args);
     }
 }
 void InterpreterVisitor::visitFunctionDeclaration(
-    GSAlphabet::FunctionDeclaration* node) {}
+    GSAlphabet::FunctionDeclaration* node) {
+    _environment._globals.emplace(
+        node->name, new GsUserFunction(node->name, node->arguments,
+                                       node->returnType.value(), node->body));
+}
 }  // namespace GsInterpreter

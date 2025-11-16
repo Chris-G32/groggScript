@@ -22,9 +22,6 @@ class AbstractGsFunction {
     [[nodiscard]] size_t arity() const { return parameters.size(); }
     virtual std::optional<GsValue> call(class InterpreterVisitor* interpreter,
                                         std::vector<GsValue> args) = 0;
-    // virtual std::optional<GsValue> operator()(
-    //     class InterpreterVisitor* interpreter, std::vector<GsValue>
-    //     args){call}
     std::string name;
     std::vector<GSAlphabet::FunctionParameter> parameters;
     std::string returnType;

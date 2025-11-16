@@ -9,7 +9,6 @@
 #include "alphabet/program.hpp"
 #include "alphabet/statement.hpp"
 #include "alphabet/statements.hpp"
-#include "alphabet/term.hpp"
 #include "alphabet/unary_expression.hpp"
 using namespace GSAlphabet;
 class PrinterVisitor : public AbstractAlphabetNodeVisitor {
@@ -98,10 +97,6 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
             printChild("arg" + std::to_string(count++), arg);
         }
     }
-    void visitTerm(Term* node) override {
-        printNodeName("term");
-        visit(node->term.get());
-    };
     void visitFunctionDeclaration(FunctionDeclaration* node) override {
         printNodeName("function_declaration");
         printChild("body", node->body);

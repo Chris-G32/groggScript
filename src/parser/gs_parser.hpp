@@ -3,7 +3,6 @@
 #include "../concrete_syntax_tree/alphabet/program.hpp"
 #include "../concrete_syntax_tree/alphabet/statement.hpp"
 #include "../concrete_syntax_tree/alphabet/statements.hpp"
-#include "../concrete_syntax_tree/alphabet/term.hpp"
 #include "../concrete_syntax_tree/alphabet/variable_assignment.hpp"
 #include "../concrete_syntax_tree/alphabet/variable_declaration.hpp"
 #include "../lexer/lexer.h"
@@ -18,7 +17,7 @@ class GsParser {
     std::unique_ptr<GSAlphabet::Statements> statements();
     std::unique_ptr<GSAlphabet::Statement> statement();
     std::unique_ptr<GSAlphabet::AbstractAlphabetNode> expression();
-    std::unique_ptr<GSAlphabet::Term> term();
+    std::unique_ptr<GSAlphabet::AbstractAlphabetNode> term();
     std::unique_ptr<GSAlphabet::Literal> literal();
     std::unique_ptr<GSAlphabet::Symbol> symbol();
     std::unique_ptr<GSAlphabet::VariableDeclaration> variableDeclaration();

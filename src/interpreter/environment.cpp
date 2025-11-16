@@ -26,7 +26,7 @@ void GsEnvironment::declareVariable(const std::string& identifier) {
 }
 void GsEnvironment::assignVariable(const std::string& identifier,
                                    const std::optional<GsValue>& value) {
-    if (const auto it = _locals.find(identifier); it != _locals.end()) {
+    if (auto it = _locals.find(identifier); it != _locals.end()) {
         it->second = value;
         return;
     }
