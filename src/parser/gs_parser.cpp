@@ -26,8 +26,9 @@ unique_ptr<Statements> GsParser::statements() {
 }
 unique_ptr<Statement> GsParser::statement() {
     std::unique_ptr<Statement> stmt = nullptr;
-
-    if (auto varDecl = variableDeclaration(); varDecl != nullptr) {
+    if (accept(TokenType::RETURN_KW)) {
+        stmt = std::make_unique<Statement>(expression(), StatementType::RETURN);
+    } else if (auto varDecl = variableDeclaration(); varDecl != nullptr) {
         stmt = std::make_unique<Statement>(std::move(varDecl));
     } else if (auto varAssign = variableAssignment(); varAssign != nullptr) {
         stmt = std::make_unique<Statement>(std::move(varAssign));

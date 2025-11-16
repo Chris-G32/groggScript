@@ -136,6 +136,13 @@ void InterpreterVisitor::visitStatements(Statements* node) {
     }
 }
 void InterpreterVisitor::visitStatement(Statement* node) {
+    if (node->type == StatementType::RETURN) {
+        if (node->child != nullptr) {
+            visit(node->child.get());
+        } else {
+            _exprResult = std::nullopt;
+        }
+    }
     visit(node->child.get());
 }
 void InterpreterVisitor::visitVariableDeclaration(VariableDeclaration* node) {

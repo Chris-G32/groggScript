@@ -10,6 +10,7 @@
 #define BOOLEAN_TYPE_KEYWORD "bool"
 #define VAR_TYPE_KEYWORD "var"
 #define FN_KEYWORD "fn"
+#define RETURN_KEYWORD "return"
 #define SIMPLE_HANDLER(ch, tokenType)                       \
     case ch: {                                              \
         _tokens.push_back({tokenType, std::string(1, ch)}); \
@@ -186,6 +187,9 @@ void GroggScript::Tokenizer::generateTokens() {
                     } else if (working == FN_KEYWORD) {
                         _tokens.push_back(
                             {TokenType::FUNCTION_MARKER, working});
+                        break;
+                    } else if (working == RETURN_KEYWORD) {
+                        _tokens.push_back({TokenType::RETURN_KW, working});
                         break;
                     }
                     _tokens.push_back({TokenType::SYMBOL, working});

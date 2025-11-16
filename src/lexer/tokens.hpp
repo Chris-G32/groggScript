@@ -57,7 +57,8 @@ enum class TokenType {
     RESERVED_BOOLEAN_TYPE,
     TRUE,
     FALSE,
-    RESERVED_VAR_KEYWORD
+    RESERVED_VAR_KEYWORD,
+    RETURN_KW
 };
 
 struct Token {

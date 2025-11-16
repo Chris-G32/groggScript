@@ -5,12 +5,14 @@
 #include "call_expression.hpp"
 
 namespace GSAlphabet {
-
+enum class StatementType { ONE_LINE, RETURN };
 class Statement : public AbstractAlphabetNode {
    public:
-    Statement(std::unique_ptr<AbstractAlphabetNode> statement)
-        : child(std::move(statement)) {}
+    Statement(std::unique_ptr<AbstractAlphabetNode> statement,
+              const StatementType type = StatementType::ONE_LINE)
+        : child(std::move(statement)), type(type) {}
     std::unique_ptr<AbstractAlphabetNode> child;
+    StatementType type;
     virtual void accept(AbstractAlphabetNodeVisitor* visitor) override;
 };
 
