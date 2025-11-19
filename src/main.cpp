@@ -183,9 +183,9 @@ int main(int argc, char **argv) {
         logger.info("Generating AST...");
         GsParser parser(tokenizer.getTokens());
         auto prog = parser.program();
-        PrinterVisitor vis;
-        vis.visit(prog.get());
-        logger.info("AST printed...");
+        // PrinterVisitor vis;
+        // vis.visit(prog.get());
+        // logger.info("AST printed...");
         logger.info("Interpreter starting...");
         GsInterpreter::InterpreterVisitor interpreter;
         interpreter.visit(prog.get());

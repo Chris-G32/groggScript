@@ -81,6 +81,9 @@ var_declaration:
 
 function_declaration: fn symbol open_parentheses (symbol type_specifier)*  close_parentheses -> symbol { statements }
 
+if_statement:
+| if expression { statements }
+
 statement:
 | function_declaration
 | var_declaration ;

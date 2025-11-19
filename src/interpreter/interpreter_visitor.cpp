@@ -1,10 +1,10 @@
 #include "interpreter_visitor.hpp"
 
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <ostream>
 #include <sstream>
-#include <unordered_map>
 #include <variant>
 
 #include "../concrete_syntax_tree/alphabet/binary_expression.hpp"
@@ -33,7 +33,36 @@ namespace GsInterpreter {
 void throw_expected_non_void_expression() {
     throw std::runtime_error("Expected non-void expression");
 }
-
+GSAlphabet::Primitive less_than(const GSAlphabet::Primitive& lhs,
+                                const GSAlphabet::Primitive& rhs) {
+    return std::visit(
+        []<typename T0, typename T1>(const T0& lhs,
+                                     const T1& rhs) -> Primitive {
+            using T = std::decay_t<T0>;
+            using V = std::decay_t<T1>;
+            if constexpr (!std::is_same_v<T, V>) {
+                throw std::runtime_error(
+                    "Less than is only supported between values of the same "
+                    "type.");
+            }
+            if constexpr (std::is_same_v<T, GSAlphabet::boolean> &&
+                          std::is_same_v<V, GSAlphabet::boolean>) {
+                return lhs < rhs;
+            }
+            if constexpr ((std::is_same_v<T, GSAlphabet::integer> &&
+                           std::is_same_v<V, GSAlphabet::integer>) ||
+                          (std::is_same_v<T, GSAlphabet::decimal> &&
+                           std::is_same_v<V, GSAlphabet::decimal>) ||
+                          (std::is_same_v<T, GSAlphabet::text> &&
+                           std::is_same_v<V, GSAlphabet::text>)) {
+                return lhs < rhs;
+            }
+            throw std::logic_error(
+                "Less than operation failed, escaped bounds of expected "
+                "types.");
+        },
+        lhs, rhs);
+}
 GSAlphabet::Primitive add(const GSAlphabet::Primitive& lhs,
                           const GSAlphabet::Primitive& rhs) {
     return std::visit(
@@ -120,10 +149,11 @@ InterpreterVisitor::InterpreterVisitor() {
             },
             args[0]);
     };
-    AbstractGsFunction* print = new GsNativeFunction(
-        "print", {{"text", "string"}}, "string", printImpl);
-    _environment._globals.emplace("print", print);
-    _environment._globals.emplace(
+
+    _environment.globals.initializeSymbol(
+        "print", new GsNativeFunction("print", {{"text", "string"}}, "string",
+                                      printImpl));
+    _environment.globals.initializeSymbol(
         "toString",
         new GsNativeFunction("toString", {{"val", "string"}}, "string", toStr));
 }
@@ -133,6 +163,9 @@ void InterpreterVisitor::visitProgram(Program* node) {
 void InterpreterVisitor::visitStatements(Statements* node) {
     for (auto& stmt : node->statements) {
         visit(stmt.get());
+        if (_returnFlag) {
+            return;
+        }
     }
 }
 void InterpreterVisitor::visitStatement(Statement* node) {
@@ -142,17 +175,19 @@ void InterpreterVisitor::visitStatement(Statement* node) {
         } else {
             _exprResult = std::nullopt;
         }
+        _returnFlag = true;
+        return;
     }
     visit(node->child.get());
 }
 void InterpreterVisitor::visitVariableDeclaration(VariableDeclaration* node) {
     if (node->initializer == nullptr) {
-        _environment.declareVariable(node->identifier);
+        _environment.getDefaultScope().declareSymbol(node->identifier);
         return;
     }
     visit(node->initializer.get());
-    _environment.initializeVariable(node->identifier,
-                                    popExpressionResult().value());
+    _environment.getDefaultScope().initializeSymbol(
+        node->identifier, popExpressionResult().value());
 }
 void InterpreterVisitor::visitVariableAssignment(VariableAssignment* node) {
     visit(node->rhs.get());
@@ -161,7 +196,7 @@ void InterpreterVisitor::visitVariableAssignment(VariableAssignment* node) {
         throw std::runtime_error(
             "Expected an evaluatable expression as the rhs");
     }
-    _environment.assignVariable(node->identifier, exprResult);
+    _environment.getDefaultScope().assignSymbol(node->identifier, exprResult);
 }
 void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
     visit(node->left.get());
@@ -186,6 +221,8 @@ void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
         case BinaryOperator::NOT_EQUALS:
             break;
         case BinaryOperator::LESS_THAN:
+            setExprResult(less_than(std::get<GSAlphabet::Primitive>(lhsVal),
+                                    std::get<GSAlphabet::Primitive>(rhsVal)));
             break;
         case BinaryOperator::LESS_THAN_EQUAL:
             break;
@@ -194,12 +231,12 @@ void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
         case BinaryOperator::GREATER_THAN_EQUALS:
             break;
         case BinaryOperator::ADDITION:
-            _exprResult = add(std::get<GSAlphabet::Primitive>(lhsVal),
-                              std::get<GSAlphabet::Primitive>(rhsVal));
+            setExprResult(add(std::get<GSAlphabet::Primitive>(lhsVal),
+                              std::get<GSAlphabet::Primitive>(rhsVal)));
             break;
         case BinaryOperator::SUBTRACTION:
-            _exprResult = subtract(std::get<GSAlphabet::Primitive>(lhsVal),
-                                   std::get<GSAlphabet::Primitive>(rhsVal));
+            setExprResult(subtract(std::get<GSAlphabet::Primitive>(lhsVal),
+                                   std::get<GSAlphabet::Primitive>(rhsVal)));
         case BinaryOperator::DIVISION:
             break;
         case BinaryOperator::MULTIPLY:
@@ -208,14 +245,15 @@ void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
 }
 void InterpreterVisitor::visitUnaryExpression(UnaryExpression* node) {}
 void InterpreterVisitor::visitSymbol(Symbol* node) {
-    _exprResult = _environment.getVariable(node->identifier);
+    _exprResult = _environment.getDefaultScope().getSymbol(node->identifier);
 }
 void InterpreterVisitor::visitLiteral(Literal* node) {
     _exprResult = std::make_optional(node->literal);
 }
-const std::optional<GsValue> InterpreterVisitor::popExpressionResult() {
+std::optional<GsValue> InterpreterVisitor::popExpressionResult() {
     auto tmp = _exprResult;
     _exprResult = std::nullopt;
+    DEBUG_LOG("ExprResult popped:" + to_string(tmp));
     return tmp;
 }
 void InterpreterVisitor::visitCallExpression(CallExpression* node) {
@@ -225,22 +263,47 @@ void InterpreterVisitor::visitCallExpression(CallExpression* node) {
         return;
     }
     const std::string identifier = sym->identifier;
-
-    if (const auto& foo = _environment._globals.find(identifier);
-        foo != _environment._globals.end()) {
-        std::vector<GsValue> args;
-        for (const auto& arg : node->arguments) {
-            visit(arg.get());
-            args.push_back(popExpressionResult().value());
-        }
-        _exprResult =
-            std::get<AbstractGsFunction*>(*foo->second)->call(this, args);
+    auto binding = _environment.globals.getSymbol(identifier);
+    auto& foo = std::get<AbstractGsFunction*>(*binding);
+    if (foo == nullptr) {
+        throw std::runtime_error(
+            "Expected identifier '" + identifier +
+            "' to be callable. Received:" + to_string(binding));
     }
+    std::vector<GsValue> args;
+    for (const auto& arg : node->arguments) {
+        visit(arg.get());
+        args.push_back(popExpressionResult().value());
+    }
+
+    setExprResult(foo->call(this, args));
+    _returnFlag = false;
 }
 void InterpreterVisitor::visitFunctionDeclaration(
     GSAlphabet::FunctionDeclaration* node) {
-    _environment._globals.emplace(
+    _environment.getDefaultScope().initializeSymbol(
         node->name, new GsUserFunction(node->name, node->arguments,
                                        node->returnType.value(), node->body));
+}
+void InterpreterVisitor::visitConditionalStatement(
+    GSAlphabet::ConditionalStatement* node) {
+    visit(node->condition.get());
+    try {
+        const auto result = popExpressionResult();
+        if (!result) {
+            throw std::runtime_error("No result for evaluated condition.");
+        }
+        Primitive primVal = std::get<Primitive>(*result);
+        bool exec = std::get<bool>(primVal);
+        if (exec) {
+            visit(node->child.get());
+        }
+    } catch (const std::bad_variant_access& e) {
+        std::cerr << "Expected boolean expression in conditional: " << e.what()
+                  << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Unexpected error in conditional statement evaluation: "
+                  << e.what() << std::endl;
+    }
 }
 }  // namespace GsInterpreter

@@ -1,6 +1,7 @@
 #include "gs_parser.hpp"
 
 #include "../concrete_syntax_tree/alphabet/binary_expression.hpp"
+#include "../concrete_syntax_tree/alphabet/conditional_statement.hpp"
 #include "../concrete_syntax_tree/alphabet/function_declaration.hpp"
 #include "../concrete_syntax_tree/alphabet/literal.hpp"
 #include "../concrete_syntax_tree/alphabet/symbol.hpp"
@@ -26,8 +27,24 @@ unique_ptr<Statements> GsParser::statements() {
 }
 unique_ptr<Statement> GsParser::statement() {
     std::unique_ptr<Statement> stmt = nullptr;
-    if (accept(TokenType::RETURN_KW)) {
+
+    if (accept(TokenType::RETURN_KEYWORD)) {
         stmt = std::make_unique<Statement>(expression(), StatementType::RETURN);
+    } else if (accept(TokenType::IF_KEYWORD)) {
+        auto cond = expression();
+        if (cond == nullptr) {
+            throw std::runtime_error("Empty condition in conditional");
+        }
+        expect(TokenType::OPEN_CURLY_BRACE);
+        auto body = statements();
+        if (body == nullptr) {
+            std::cerr << "If condition with empty body. This is probably a bug "
+                         "in your code."
+                      << std::endl;
+        }
+        expect(TokenType::CLOSE_CURLY_BRACE);
+        return std::make_unique<ConditionalStatement>(std::move(cond),
+                                                      std::move(body));
     } else if (auto varDecl = variableDeclaration(); varDecl != nullptr) {
         stmt = std::make_unique<Statement>(std::move(varDecl));
     } else if (auto varAssign = variableAssignment(); varAssign != nullptr) {
@@ -53,9 +70,9 @@ std::optional<BinaryOperator> getBinaryOperator(TokenType token) {
         case TokenType::EXCLAMATION_EQUALS:
             return std::make_optional(LOGICAL_AND);
         case TokenType::LESS_THAN:
-            return std::make_optional(NOT_EQUALS);
-        case TokenType::LESS_THAN_EQUALS:
             return std::make_optional(LESS_THAN);
+        case TokenType::LESS_THAN_EQUALS:
+            return std::make_optional(LESS_THAN_EQUAL);
         case TokenType::GREATER_THAN:
             return std::make_optional(GREATER_THAN);
         case TokenType::GREATER_THAN_EQUALS:
@@ -187,20 +204,19 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         }
         auto op = _current->token;
         // ReSharper disable once CppDFALoopConditionNotUpdated
-        while (op == TokenType::GREATER_THAN_EQUALS ||
-               op == TokenType::GREATER_THAN ||
-               op == TokenType::LESS_THAN_EQUALS ||
-               op == TokenType::LESS_THAN) {
+        if (op == TokenType::GREATER_THAN_EQUALS ||
+            op == TokenType::GREATER_THAN ||
+            op == TokenType::LESS_THAN_EQUALS || op == TokenType::LESS_THAN) {
+            advance();
             if (auto rhs = additiveExpr(); rhs != nullptr) {
                 expr = std::make_unique<BinaryExpression>(
                     std::move(expr), getBinaryOperator(op).value(),
                     std::move(rhs));
-                advance();
-                op = _current->token;
-                continue;
+            } else {
+                throw std::runtime_error(
+                    "Expected an expression after operator: " +
+                    GroggScript::tokenTypeToString(op));
             }
-            throw std::runtime_error("Expected an expression after operator: " +
-                                     GroggScript::tokenTypeToString(op));
         }
         return expr;
     };

@@ -1,34 +1,28 @@
-/*var count=0;
-fn poopypants(pants:string)->string{
-count = count + 1;
-print("clean"+pants+toString(count));
-poopypants(pants);
+fn countRecurse(count:int)->int{
+    if (count < 1) {
+        return 1;
+    }
+    countRecurse(count-1);
+    print(toString(count));
+    return 1;
 }
-var myVal=1+2;
-print(toString(myVal));
-print("------");
-print("myVal");
-poopypants(toString(myVal));
-poopypants(toString(myVal));
-poopypants("pants");*/
-
-fn wrap(val:string,wrap:string)->string{
-    return (wrap+val) + wrap;
+fn repeat(str:string,count:int)->string{
+    if (count < 1) {
+    return "";
+    }
+    if(count < 2){
+        return str;
+     }
+    return str + repeat(str,count-1);
 }
-var a= wrap(wrap("--","|"),"--");
-print(a);
-/*
-print("I can do addition and subtraction currentyl:)");
-var myDecimal=3.14;
-var subtracted=myDecimal-0.112122;
-print("decimal"+toString(subtracted));
-var myInt=21;
-// This should be zero right??
-print("int");
+fn fib(num:int)->int{
+if num <2{return num;}
+return fib(num-1)+fib(num-2);
+}
+print("\"countRecurse\"\n");
+countRecurse(2);
 
+print("fib");
+print(toString(fib(20))+"\n");
 
-The following script is malware :)
-
-
-
-*/
+print(repeat("_",2000));

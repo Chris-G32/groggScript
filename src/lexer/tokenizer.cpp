@@ -10,7 +10,8 @@
 #define BOOLEAN_TYPE_KEYWORD "bool"
 #define VAR_TYPE_KEYWORD "var"
 #define FN_KEYWORD "fn"
-#define RETURN_KEYWORD "return"
+#define RETURN_KEYWORD_STR "return"
+#define IF_KEYWORD_STR "if"
 #define SIMPLE_HANDLER(ch, tokenType)                       \
     case ch: {                                              \
         _tokens.push_back({tokenType, std::string(1, ch)}); \
@@ -99,23 +100,35 @@ void GroggScript::Tokenizer::generateTokens() {
                 string builder;  // Start with open quote
                 char next = advance();
                 bool foundClose = false;
-                bool escaped = false;
                 while ((next != '\0') && (!foundClose) && (next != '\n')) {
-                    if (next == '\\' && !escaped) {
-                        escaped = true;
-                        auto peeked = peek();
-                        if (peeked != '\"' && peeked != '\\') {
-                            logger.warn("Unnecessary escape encountered at " +
-                                        getLinePos());
-                        }
+                    if (next == '\\') {
                         next = advance();
-                        continue;
-                    } else if (next == '\"' && !escaped) {
+                        switch (next) {
+                            case '\'':
+                                next = '\'';
+                                break;
+                            case '"':
+                                next = '"';
+                                break;
+                            case '\\':
+                                next = '\\';
+                                break;
+                            case 'n':
+                                next = '\n';
+                                break;
+                            default:
+                                logger.warn(
+                                    "Unnecessary escape encountered at " +
+                                    getLinePos());
+                                break;
+                        }
+                    }
+
+                    else if (next == '\"') {
                         foundClose = true;
                         advance();
                         continue;
                     }
-                    escaped = false;
                     builder.append(1, next);
                     next = advance();
                 }
@@ -158,11 +171,14 @@ void GroggScript::Tokenizer::generateTokens() {
                     string working(1, currentChar);
                     auto next = advance();
 
-                    while (isalnum(next) || next == '_') {
+                    while (isalnum(next) || next == '_' || next == '\\') {
                         working.append(1, next);
                         next = advance();
                     }
-                    if (working == INTEGER_TYPE_KEYWORD) {
+                    if (working == IF_KEYWORD_STR) {
+                        _tokens.push_back({TokenType::IF_KEYWORD, working});
+                        break;
+                    } else if (working == INTEGER_TYPE_KEYWORD) {
                         _tokens.push_back(
                             {TokenType::RESERVED_INTEGER_TYPE, working});
                         break;
@@ -188,8 +204,8 @@ void GroggScript::Tokenizer::generateTokens() {
                         _tokens.push_back(
                             {TokenType::FUNCTION_MARKER, working});
                         break;
-                    } else if (working == RETURN_KEYWORD) {
-                        _tokens.push_back({TokenType::RETURN_KW, working});
+                    } else if (working == RETURN_KEYWORD_STR) {
+                        _tokens.push_back({TokenType::RETURN_KEYWORD, working});
                         break;
                     }
                     _tokens.push_back({TokenType::SYMBOL, working});

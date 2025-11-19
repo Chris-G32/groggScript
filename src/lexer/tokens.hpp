@@ -58,7 +58,8 @@ enum class TokenType {
     TRUE,
     FALSE,
     RESERVED_VAR_KEYWORD,
-    RETURN_KW
+    RETURN_KEYWORD,
+    IF_KEYWORD
 };
 
 struct Token {

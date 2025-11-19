@@ -15,6 +15,8 @@ class AbstractAlphabetNodeVisitor {
     virtual void visitSymbol(class Symbol* node) = 0;
     virtual void visitLiteral(class Literal* node) = 0;
     virtual void visitFunctionDeclaration(class FunctionDeclaration* node) = 0;
+    virtual void visitConditionalStatement(
+        class ConditionalStatement* node) = 0;
     virtual ~AbstractAlphabetNodeVisitor() = default;
 };
 

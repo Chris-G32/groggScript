@@ -4,6 +4,7 @@
 
 #include "alphabet/abstract_alphabet_node.hpp"
 #include "alphabet/binary_expression.hpp"
+#include "alphabet/conditional_statement.hpp"
 #include "alphabet/function_declaration.hpp"
 #include "alphabet/literal.hpp"
 #include "alphabet/program.hpp"
@@ -67,6 +68,11 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
         printNodeName("symbol");
         printChild("identifier", node->identifier);
     };
+    void visitConditionalStatement(ConditionalStatement* node) override {
+        printNodeName("conditional_statement");
+        printChild("condition", node->condition);
+        printChild("body", node->condition);
+    }
     void visitLiteral(Literal* node) override {
         printNodeName("literal");
         std::visit(
