@@ -12,7 +12,7 @@ class Bindings {
         // assume maybe 10 symbols is the average case for locals, avoid rehash
         _symbols.reserve(10);
     }
-    [[nodiscard]] std::optional<GsValue>& getSymbol(
+    [[nodiscard]] std::optional<gs_value>& getSymbol(
         const std::string& identifier);
     /// Introduces this symbol, stops it getting redefined in the same scope
     void declareSymbol(const std::string& identifier) {
@@ -20,12 +20,13 @@ class Bindings {
     }
     /// Assign a value to an already initialized symbol
     void assignSymbol(const std::string& identifier,
-                      std::optional<GsValue> value);
+                      std::optional<gs_value> value);
     /// Declare and assign a value
-    void initializeSymbol(std::string identifier, std::optional<GsValue> value);
+    void initializeSymbol(std::string identifier,
+                          std::optional<gs_value> value);
 
    private:
-    std::unordered_map<std::string, std::optional<GsValue>> _symbols;
+    std::unordered_map<std::string, std::optional<gs_value>> _symbols;
 };
 
 }  // namespace GsInterpreter

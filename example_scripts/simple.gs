@@ -1,28 +1,17 @@
-fn countRecurse(count:int)->int{
-    if (count < 1) {
-        return 1;
-    }
-    countRecurse(count-1);
-    print(toString(count));
-    return 1;
+var x=14.25;
+var x2=8.25;
+var res=x+x2;
+fn add_or_subtract(val:float,diff:float)->float{
+print(toString(val)+","+toString(diff));
+if(val<diff){
+    return add_or_subtract(diff-val,val);
 }
-fn repeat(str:string,count:int)->string{
-    if (count < 1) {
-    return "";
-    }
-    if(count < 2){
-        return str;
-     }
-    return str + repeat(str,count-1);
+if(val==diff){
+    return 1.0;
 }
-fn fib(num:int)->int{
-if num <2{return num;}
-return fib(num-1)+fib(num-2);
+if(val>diff){
+    return add_or_subtract(val,val+diff);
 }
-print("\"countRecurse\"\n");
-countRecurse(2);
-
-print("fib");
-print(toString(fib(20))+"\n");
-
-print(repeat("_",2000));
+}
+add_or_subtract(x,x2);
+print(res);

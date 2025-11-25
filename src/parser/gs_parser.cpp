@@ -161,11 +161,11 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         auto op = _current->token;
         // ReSharper disable once CppDFALoopConditionNotUpdated
         while (op == TokenType::ASTERISK || op == TokenType::FORWARD_SLASH) {
+            advance();
             if (auto rhs = postfixExpr(); rhs != nullptr) {
                 expr = std::make_unique<BinaryExpression>(
                     std::move(expr), getBinaryOperator(op).value(),
                     std::move(rhs));
-                advance();
                 op = _current->token;
                 continue;
             }
@@ -230,11 +230,12 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         // ReSharper disable once CppDFALoopConditionNotUpdated
         while (op == TokenType::EXCLAMATION_EQUALS ||
                op == TokenType::DOUBLE_EQUALS) {
+            advance();
             if (auto rhs = comparativeExpr(); rhs != nullptr) {
                 expr = std::make_unique<BinaryExpression>(
                     std::move(expr), getBinaryOperator(op).value(),
                     std::move(rhs));
-                advance();
+
                 op = _current->token;
                 continue;
             }

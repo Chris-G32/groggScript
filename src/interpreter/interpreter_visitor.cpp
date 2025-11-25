@@ -17,6 +17,7 @@
 #include "../concrete_syntax_tree/alphabet/variable_assignment.hpp"
 #include "../concrete_syntax_tree/alphabet/variable_declaration.hpp"
 #include "../concrete_syntax_tree/printer_visitor.hpp"
+#include "built_ins/built_in_functions.hpp"
 #include "functions/gs_native_function.hpp"
 using GSAlphabet::BinaryExpression;
 using GSAlphabet::BinaryOperator;
@@ -30,132 +31,17 @@ using GSAlphabet::UnaryExpression;
 using GSAlphabet::VariableAssignment;
 using GSAlphabet::VariableDeclaration;
 namespace GsInterpreter {
+gs_value fromPrimitive(Primitive primitive) {
+    return std::visit([](const auto& val) -> gs_value { return gs_value(val); },
+                      primitive);
+}
 void throw_expected_non_void_expression() {
     throw std::runtime_error("Expected non-void expression");
 }
-GSAlphabet::Primitive less_than(const GSAlphabet::Primitive& lhs,
-                                const GSAlphabet::Primitive& rhs) {
-    return std::visit(
-        []<typename T0, typename T1>(const T0& lhs,
-                                     const T1& rhs) -> Primitive {
-            using T = std::decay_t<T0>;
-            using V = std::decay_t<T1>;
-            if constexpr (!std::is_same_v<T, V>) {
-                throw std::runtime_error(
-                    "Less than is only supported between values of the same "
-                    "type.");
-            }
-            if constexpr (std::is_same_v<T, GSAlphabet::boolean> &&
-                          std::is_same_v<V, GSAlphabet::boolean>) {
-                return lhs < rhs;
-            }
-            if constexpr ((std::is_same_v<T, GSAlphabet::integer> &&
-                           std::is_same_v<V, GSAlphabet::integer>) ||
-                          (std::is_same_v<T, GSAlphabet::decimal> &&
-                           std::is_same_v<V, GSAlphabet::decimal>) ||
-                          (std::is_same_v<T, GSAlphabet::text> &&
-                           std::is_same_v<V, GSAlphabet::text>)) {
-                return lhs < rhs;
-            }
-            throw std::logic_error(
-                "Less than operation failed, escaped bounds of expected "
-                "types.");
-        },
-        lhs, rhs);
-}
-GSAlphabet::Primitive add(const GSAlphabet::Primitive& lhs,
-                          const GSAlphabet::Primitive& rhs) {
-    return std::visit(
-        [](const auto& lhs, const auto& rhs) -> Primitive {
-            using T = std::decay_t<decltype(lhs)>;
-            using V = std::decay_t<decltype(rhs)>;
-            if constexpr (!std::is_same_v<T, V>) {
-                throw std::runtime_error(
-                    "Addition is only supported between values of the same "
-                    "type.");
-            }
-            if constexpr (std::is_same_v<T, GSAlphabet::boolean>) {
-                throw std::runtime_error(
-                    "Arithmetic operations not allowed on type boolean.");
-            }
-            if constexpr ((std::is_same_v<T, GSAlphabet::integer> &&
-                           std::is_same_v<V, GSAlphabet::integer>) ||
-                          (std::is_same_v<T, GSAlphabet::decimal> &&
-                           std::is_same_v<V, GSAlphabet::decimal>) ||
-                          (std::is_same_v<T, GSAlphabet::text> &&
-                           std::is_same_v<V, GSAlphabet::text>)) {
-                return lhs + rhs;
-            }
-            throw std::logic_error(
-                "Subtraction operation failed, escaped bounds of expected "
-                "types.");
-        },
-        lhs, rhs);
-}
-GSAlphabet::Primitive subtract(const GSAlphabet::Primitive& lhs,
-                               const GSAlphabet::Primitive& rhs) {
-    return std::visit(
-        [](const auto& lhs, const auto& rhs) -> GSAlphabet::Primitive {
-            using T = std::decay_t<decltype(lhs)>;
-            using V = std::decay_t<decltype(rhs)>;
-            if constexpr (!std::is_same_v<T, V>) {
-                throw std::runtime_error(
-                    "Subtraction is only supported between values of the same "
-                    "type.");
-            }
-            if constexpr (std::is_same_v<T, GSAlphabet::text>) {
-                throw std::runtime_error(
-                    "Subtract operation not allowed on type "
-                    "string.");
-            }
-            if constexpr (std::is_same_v<T, GSAlphabet::boolean>) {
-                throw std::runtime_error(
-                    "Arithmetic operations not allowed on type boolean.");
-            }
-            if constexpr ((std::is_same_v<T, GSAlphabet::integer> &&
-                           std::is_same_v<V, GSAlphabet::integer>) ||
-                          (std::is_same_v<T, GSAlphabet::decimal> &&
-                           std::is_same_v<V, GSAlphabet::decimal>)) {
-                return lhs - rhs;
-            }
-            throw std::logic_error(
-                "Subtraction operation failed, escaped bounds of expected "
-                "types.");
-        },
-        lhs, rhs);
-}
+
 InterpreterVisitor::InterpreterVisitor() {
-    auto printImpl = [](std::vector<GsValue>& args) -> std::optional<GsValue> {
-        std::cout << std::get<text>(std::get<Primitive>(args[0]));
-        return std::nullopt;
-    };
-    auto toStr = [](std::vector<GsValue>& args) -> std::optional<GsValue> {
-        return std::visit(
-            []<typename T0>(T0& val) {
-                using T = std::decay_t<T0>;
-                if constexpr (std::is_same_v<T, Primitive>) {
-                    return std::visit(
-                        [](auto& prim) -> GsValue {
-                            std::ostringstream oss;
-                            oss << std::boolalpha << prim;
-                            return oss.str();
-                        },
-                        val);
-
-                } else {
-                    GsValue retVal = "Function or sum bs";
-                    return retVal;
-                }
-            },
-            args[0]);
-    };
-
-    _environment.globals.initializeSymbol(
-        "print", new GsNativeFunction("print", {{"text", "string"}}, "string",
-                                      printImpl));
-    _environment.globals.initializeSymbol(
-        "toString",
-        new GsNativeFunction("toString", {{"val", "string"}}, "string", toStr));
+    registerNativeFunction(GsBuiltIns::print);
+    registerNativeFunction(GsBuiltIns::toString);
 }
 void InterpreterVisitor::visitProgram(Program* node) {
     visit(node->statements.get());
@@ -182,11 +68,11 @@ void InterpreterVisitor::visitStatement(Statement* node) {
 }
 void InterpreterVisitor::visitVariableDeclaration(VariableDeclaration* node) {
     if (node->initializer == nullptr) {
-        _environment.getDefaultScope().declareSymbol(node->identifier);
+        pEnvironment.getDefaultScope().declareSymbol(node->identifier);
         return;
     }
     visit(node->initializer.get());
-    _environment.getDefaultScope().initializeSymbol(
+    pEnvironment.getDefaultScope().initializeSymbol(
         node->identifier, popExpressionResult().value());
 }
 void InterpreterVisitor::visitVariableAssignment(VariableAssignment* node) {
@@ -196,7 +82,7 @@ void InterpreterVisitor::visitVariableAssignment(VariableAssignment* node) {
         throw std::runtime_error(
             "Expected an evaluatable expression as the rhs");
     }
-    _environment.getDefaultScope().assignSymbol(node->identifier, exprResult);
+    pEnvironment.getDefaultScope().assignSymbol(node->identifier, exprResult);
 }
 void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
     visit(node->left.get());
@@ -211,49 +97,61 @@ void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
     }
     const auto& lhsVal = lhs.value();
     const auto& rhsVal = rhs.value();
+    std::optional<gs_value> result = std::nullopt;
     switch (node->op) {
-        case BinaryOperator::LOGICAL_OR:
+        case LOGICAL_OR:
+            // result = lhsVal || rhsVal; TODO: Add logical or
             break;
-        case BinaryOperator::LOGICAL_AND:
+        case LOGICAL_AND:
+            // result = lhsVal && rhsVal; TODO: Add logical and
             break;
-        case BinaryOperator::LOGICAL_EQUALS:
+        case LOGICAL_EQUALS:
+            result = lhsVal == rhsVal;
             break;
-        case BinaryOperator::NOT_EQUALS:
+        case NOT_EQUALS:
+            result = lhsVal != rhsVal;
             break;
-        case BinaryOperator::LESS_THAN:
-            setExprResult(less_than(std::get<GSAlphabet::Primitive>(lhsVal),
-                                    std::get<GSAlphabet::Primitive>(rhsVal)));
+        case LESS_THAN:
+            result = lhsVal < rhsVal;
             break;
-        case BinaryOperator::LESS_THAN_EQUAL:
+        case LESS_THAN_EQUAL:
+            result = lhsVal <= rhsVal;
             break;
-        case BinaryOperator::GREATER_THAN:
+        case GREATER_THAN:
+            result = lhsVal > rhsVal;
             break;
-        case BinaryOperator::GREATER_THAN_EQUALS:
+        case GREATER_THAN_EQUALS:
+            result = lhsVal >= rhsVal;
             break;
-        case BinaryOperator::ADDITION:
-            setExprResult(add(std::get<GSAlphabet::Primitive>(lhsVal),
-                              std::get<GSAlphabet::Primitive>(rhsVal)));
+        case ADDITION:
+            result = lhsVal + rhsVal;
             break;
-        case BinaryOperator::SUBTRACTION:
-            setExprResult(subtract(std::get<GSAlphabet::Primitive>(lhsVal),
-                                   std::get<GSAlphabet::Primitive>(rhsVal)));
-        case BinaryOperator::DIVISION:
+        case SUBTRACTION:
+            result = lhsVal - rhsVal;
             break;
-        case BinaryOperator::MULTIPLY:
+        case DIVISION:
+            result = lhsVal / rhsVal;
             break;
+        case MULTIPLY:
+            result = lhsVal * rhsVal;
+            break;
+        default:
+            throw std::logic_error("Unknown binary operator");
     }
+    setExprResult(result);
 }
 void InterpreterVisitor::visitUnaryExpression(UnaryExpression* node) {}
 void InterpreterVisitor::visitSymbol(Symbol* node) {
-    _exprResult = _environment.getDefaultScope().getSymbol(node->identifier);
+    _exprResult = pEnvironment.getDefaultScope().getSymbol(node->identifier);
 }
 void InterpreterVisitor::visitLiteral(Literal* node) {
-    _exprResult = std::make_optional(node->literal);
+    _exprResult = std::make_optional(fromPrimitive(node->literal));
 }
-std::optional<GsValue> InterpreterVisitor::popExpressionResult() {
+std::optional<gs_value> InterpreterVisitor::popExpressionResult() {
     auto tmp = _exprResult;
     _exprResult = std::nullopt;
-    DEBUG_LOG("ExprResult popped:" + to_string(tmp));
+    DEBUG_LOG("ExprResult popped:" +
+              (tmp.has_value() ? to_string(*tmp) : "null"));
     return tmp;
 }
 void InterpreterVisitor::visitCallExpression(CallExpression* node) {
@@ -263,14 +161,14 @@ void InterpreterVisitor::visitCallExpression(CallExpression* node) {
         return;
     }
     const std::string identifier = sym->identifier;
-    auto binding = _environment.globals.getSymbol(identifier);
-    auto& foo = std::get<AbstractGsFunction*>(*binding);
+    auto binding = pEnvironment.globals.getSymbol(identifier);
+    auto& foo = std::get<AbstractGsFunction*>(binding.value().value);
     if (foo == nullptr) {
         throw std::runtime_error(
             "Expected identifier '" + identifier +
-            "' to be callable. Received:" + to_string(binding));
+            "' to be callable. Received:" + to_string(*binding));
     }
-    std::vector<GsValue> args;
+    std::vector<gs_value> args;
     for (const auto& arg : node->arguments) {
         visit(arg.get());
         args.push_back(popExpressionResult().value());
@@ -279,23 +177,20 @@ void InterpreterVisitor::visitCallExpression(CallExpression* node) {
     setExprResult(foo->call(this, args));
     _returnFlag = false;
 }
-void InterpreterVisitor::visitFunctionDeclaration(
-    GSAlphabet::FunctionDeclaration* node) {
-    _environment.getDefaultScope().initializeSymbol(
-        node->name, new GsUserFunction(node->name, node->arguments,
-                                       node->returnType.value(), node->body));
+void InterpreterVisitor::visitFunctionDeclaration(FunctionDeclaration* node) {
+    auto foo = new GsUserFunction(node->name, node->arguments,
+                                  node->returnType.value(), node->body);
+    pEnvironment.getDefaultScope().initializeSymbol(node->name, gs_value(foo));
 }
-void InterpreterVisitor::visitConditionalStatement(
-    GSAlphabet::ConditionalStatement* node) {
+void InterpreterVisitor::visitConditionalStatement(ConditionalStatement* node) {
     visit(node->condition.get());
     try {
         const auto result = popExpressionResult();
         if (!result) {
             throw std::runtime_error("No result for evaluated condition.");
         }
-        Primitive primVal = std::get<Primitive>(*result);
-        bool exec = std::get<bool>(primVal);
-        if (exec) {
+
+        if (result->is_truthy()) {
             visit(node->child.get());
         }
     } catch (const std::bad_variant_access& e) {

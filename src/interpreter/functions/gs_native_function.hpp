@@ -11,7 +11,7 @@
 #include "abstract_gs_function.hpp"
 namespace GsInterpreter {
 using GsNativeFunctionImpl =
-    std::function<std::optional<GsValue>(std::vector<GsValue>&)>;
+    std::function<std::optional<gs_value>(std::vector<gs_value>&)>;
 class GsNativeFunction : public AbstractGsFunction {
    public:
     GsNativeFunction(
@@ -22,8 +22,8 @@ class GsNativeFunction : public AbstractGsFunction {
     GsNativeFunction(GsNativeFunction&&) = default;
     GsNativeFunction(GsNativeFunction&) = default;
     ~GsNativeFunction() override = default;
-    std::optional<GsValue> call(InterpreterVisitor* interpreter,
-                                std::vector<GsValue> args) override {
+    std::optional<gs_value> call(InterpreterVisitor* interpreter,
+                                 std::vector<gs_value> args) override {
         return impl(args);
     }
 

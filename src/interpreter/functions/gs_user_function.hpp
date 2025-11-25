@@ -23,8 +23,8 @@ class GsUserFunction : public AbstractGsFunction {
         const std::unique_ptr<GSAlphabet::AbstractAlphabetNode> &body)
         : AbstractGsFunction(name, parameters, return_type), body(body.get()) {}
     ~GsUserFunction() override = default;
-    std::optional<GsValue> call(InterpreterVisitor *interpreter,
-                                std::vector<GsValue> args) override;
+    std::optional<gs_value> call(InterpreterVisitor *interpreter,
+                                 std::vector<gs_value> args) override;
     GsUserFunction(GsUserFunction &&) = default;
     GsUserFunction(GsUserFunction &) = default;
 

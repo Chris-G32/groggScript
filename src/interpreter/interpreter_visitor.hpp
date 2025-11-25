@@ -4,6 +4,7 @@
 #include "../concrete_syntax_tree/alphabet/abstract_alphabet_node.hpp"
 #include "../logger/logger.hpp"
 #include "environment/interpreter_state.hpp"
+#include "functions/gs_native_function.hpp"
 #include "functions/gs_user_function.hpp"
 #include "gs_value.hpp"
 namespace GsInterpreter {
@@ -27,16 +28,20 @@ class InterpreterVisitor : public GSAlphabet::AbstractAlphabetNodeVisitor {
         GSAlphabet::FunctionDeclaration* node) override;
     void visitConditionalStatement(
         GSAlphabet::ConditionalStatement* node) override;
-    [[nodiscard]] std::optional<GsValue> popExpressionResult();
-    void setExprResult(std::optional<GsValue> result) {
+    [[nodiscard]] std::optional<gs_value> popExpressionResult();
+    void setExprResult(std::optional<gs_value> result) {
         _exprResult = std::move(result);
-        DEBUG_LOG("ExprResult set to: " + to_string(_exprResult));
+        DEBUG_LOG("ExprResult set to: " +
+                  (_exprResult.has_value() ? to_string(*_exprResult) : "null"));
     }
 
    private:
-    std::optional<GsValue> _exprResult = std::nullopt;
+    void registerNativeFunction(GsNativeFunction& foo) {
+        pEnvironment.globals.initializeSymbol(foo.name, gs_value(&foo));
+    }
+    std::optional<gs_value> _exprResult = std::nullopt;
     bool _returnFlag = false;
-    InterpreterState _environment;
+    InterpreterState pEnvironment;
 };
 }  // namespace GsInterpreter
 #endif

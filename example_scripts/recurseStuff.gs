@@ -32,11 +32,11 @@ fn countRecurse(count:int)->int{
         return 1;
     }
     countRecurse(count-1);
-    print(count);
+    print(toString(count));
     return 1;
 }
 print("countRecurse");
-countRecurse(2);
+print(toString("1"));
 
 /*print("Pre repeat");
 var repeated=repeat("|=|",3);
