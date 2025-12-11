@@ -150,6 +150,21 @@ gs_value gs_value::operator==(const gs_value& rhs) const {
     return std::visit(all_visitor::make(std::equal_to(), type, "equal_to"),
                       value, rhs.value);
 }
+
+gs_value gs_value::operator++() {
+    if (std::holds_alternative<gs_int>(value)) {
+        std::get<gs_int>(value)++;
+        return *this;
+    }
+    throw std::logic_error("Increment only allowed on integers");
+}
+gs_value gs_value::operator--() {
+    if (std::holds_alternative<gs_int>(value)) {
+        std::get<gs_int>(value)--;
+        return *this;
+    }
+    throw std::logic_error("Increment only allowed on integers");
+}
 gs_value gs_value::operator<(const gs_value& rhs) const {
     assert_matching_types(rhs);
     return std::visit(all_visitor::make(std::less(), type, "less_than"), value,

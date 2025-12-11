@@ -9,6 +9,7 @@
 
 #include "../concrete_syntax_tree/alphabet/binary_expression.hpp"
 #include "../concrete_syntax_tree/alphabet/call_expression.hpp"
+#include "../concrete_syntax_tree/alphabet/for_loop.hpp"
 #include "../concrete_syntax_tree/alphabet/literal.hpp"
 #include "../concrete_syntax_tree/alphabet/primitive.hpp"
 #include "../concrete_syntax_tree/alphabet/program.hpp"
@@ -68,11 +69,11 @@ void InterpreterVisitor::visitStatement(Statement* node) {
 }
 void InterpreterVisitor::visitVariableDeclaration(VariableDeclaration* node) {
     if (node->initializer == nullptr) {
-        pEnvironment.getDefaultScope().declareSymbol(node->identifier);
+        mEnvironment_.getDefaultScope().declareSymbol(node->identifier);
         return;
     }
     visit(node->initializer.get());
-    pEnvironment.getDefaultScope().initializeSymbol(
+    mEnvironment_.getDefaultScope().initializeSymbol(
         node->identifier, popExpressionResult().value());
 }
 void InterpreterVisitor::visitVariableAssignment(VariableAssignment* node) {
@@ -82,7 +83,7 @@ void InterpreterVisitor::visitVariableAssignment(VariableAssignment* node) {
         throw std::runtime_error(
             "Expected an evaluatable expression as the rhs");
     }
-    pEnvironment.getDefaultScope().assignSymbol(node->identifier, exprResult);
+    mEnvironment_.getDefaultScope().assignSymbol(node->identifier, exprResult);
 }
 void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
     visit(node->left.get());
@@ -140,12 +141,57 @@ void InterpreterVisitor::visitBinaryExpression(BinaryExpression* node) {
     }
     setExprResult(result);
 }
-void InterpreterVisitor::visitUnaryExpression(UnaryExpression* node) {}
-void InterpreterVisitor::visitSymbol(Symbol* node) {
-    _exprResult = pEnvironment.getDefaultScope().getSymbol(node->identifier);
+
+void InterpreterVisitor::visitUnaryExpression(UnaryExpression* node) {
+    visit(node->node.get());
+    auto res = popExpressionResult();
+    if (!res) {
+        throw_expected_non_void_expression();
+    }
+    if (node->op == INCREMENT) {
+        setExprResult(++(*res));
+    } else {
+        throw std::runtime_error("Operation TODO");
+    }
 }
+
+void InterpreterVisitor::visitSymbol(Symbol* node) {
+    _exprResult = mEnvironment_.getDefaultScope().getSymbol(node->identifier);
+}
+
 void InterpreterVisitor::visitLiteral(Literal* node) {
     _exprResult = std::make_optional(fromPrimitive(node->literal));
+}
+
+void InterpreterVisitor::visitForLoop(ForLoop* node) {
+    InterpreterStateGuard g(mEnvironment_);
+    if (node->init) {
+        visit(node->init.get());
+    }
+
+    auto checkCond = [&]() {
+        if (node->condition) {
+            visit(node->condition.get());
+            if (const auto result = popExpressionResult(); result.has_value()) {
+                return result->is_truthy();
+            }
+            throw std::logic_error(
+                "Expected a result from evaluating condition.");
+        }
+        // No condition means do loop
+        return true;
+    };
+
+    if (node->child != nullptr) {
+        while (checkCond()) {
+            InterpreterStateGuard loopScope(mEnvironment_,
+                                            Bindings(mEnvironment_.locals()));
+            visit(node->child.get());
+            if (node->update) {
+                visit(node->update.get());
+            }
+        }
+    }
 }
 std::optional<gs_value> InterpreterVisitor::popExpressionResult() {
     auto tmp = _exprResult;
@@ -161,7 +207,7 @@ void InterpreterVisitor::visitCallExpression(CallExpression* node) {
         return;
     }
     const std::string identifier = sym->identifier;
-    auto binding = pEnvironment.globals.getSymbol(identifier);
+    auto binding = mEnvironment_.globals.getSymbol(identifier);
     auto& foo = std::get<AbstractGsFunction*>(binding.value().value);
     if (foo == nullptr) {
         throw std::runtime_error(
@@ -180,7 +226,7 @@ void InterpreterVisitor::visitCallExpression(CallExpression* node) {
 void InterpreterVisitor::visitFunctionDeclaration(FunctionDeclaration* node) {
     auto foo = new GsUserFunction(node->name, node->arguments,
                                   node->returnType.value(), node->body);
-    pEnvironment.getDefaultScope().initializeSymbol(node->name, gs_value(foo));
+    mEnvironment_.getDefaultScope().initializeSymbol(node->name, gs_value(foo));
 }
 void InterpreterVisitor::visitConditionalStatement(ConditionalStatement* node) {
     visit(node->condition.get());

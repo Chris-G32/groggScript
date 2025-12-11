@@ -59,7 +59,8 @@ enum class TokenType {
     FALSE,
     RESERVED_VAR_KEYWORD,
     RETURN_KEYWORD,
-    IF_KEYWORD
+    IF_KEYWORD,
+    FOR_KEYWORD,
 };
 
 struct Token {
@@ -71,6 +72,10 @@ inline string tokenTypeToString(TokenType type) {
     switch (type) {
         case TokenType::ASTERISK:
             return "asterisk";
+        case TokenType::FOR_KEYWORD:
+            return "for";
+        case TokenType::IF_KEYWORD:
+            return "if";
         case TokenType::COLON:
             return "colon";
         case TokenType::SEMICOLON:
@@ -148,9 +153,9 @@ inline string tokenTypeToString(TokenType type) {
         case TokenType::FALSE:
             return "false";
         case TokenType::OPEN_PARENTHESES:
-            return "open_parenthese";
+            return "open_parenthesis";
         case TokenType::CLOSE_PARENTHESES:
-            return "close_parenthese";
+            return "close_parenthesis";
         case TokenType::RESERVED_VAR_KEYWORD:
             return "var";
         default:

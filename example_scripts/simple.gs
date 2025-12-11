@@ -1,4 +1,4 @@
-var x=14.25;
+/*var x=14.25;
 var x2=8.25;
 var res=x+x2;
 fn add_or_subtract(val:float,diff:float)->float{
@@ -14,4 +14,9 @@ if(val>diff){
 }
 }
 add_or_subtract(x,x2);
-print(res);
+print(res);*/
+
+for (var a=1;a<11;a++){
+var str=toString(a)+"\n";
+print(str);
+}

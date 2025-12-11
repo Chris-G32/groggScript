@@ -83,7 +83,8 @@ function_declaration: fn symbol open_parentheses (symbol type_specifier)*  close
 
 if_statement:
 | if expression { statements }
-
+for_loop:
+| for (var_instantiation?; cond?; expression? ){ statements }
 statement:
 | function_declaration
 | var_declaration ;

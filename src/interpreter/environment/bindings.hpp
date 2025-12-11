@@ -8,10 +8,10 @@
 namespace GsInterpreter {
 class Bindings {
    public:
-    Bindings() {
-        // assume maybe 10 symbols is the average case for locals, avoid rehash
-        _symbols.reserve(10);
+    explicit Bindings(Bindings* parent = nullptr) : mParent_(parent) {
+        mSymbols_.reserve(10);
     }
+
     [[nodiscard]] std::optional<gs_value>& getSymbol(
         const std::string& identifier);
     /// Introduces this symbol, stops it getting redefined in the same scope
@@ -24,10 +24,12 @@ class Bindings {
     /// Declare and assign a value
     void initializeSymbol(std::string identifier,
                           std::optional<gs_value> value);
+    // Remove all bindings
+    void clear() { mSymbols_.clear(); }
 
    private:
-    std::unordered_map<std::string, std::optional<gs_value>> _symbols;
+    std::unordered_map<std::string, std::optional<gs_value>> mSymbols_;
+    Bindings* mParent_;
 };
-
 }  // namespace GsInterpreter
 #endif  // GROGGSCRIPT_BINDINGS_HPP

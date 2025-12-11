@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ABSTRACT_ALPHABET_NODE_HPP
+#define ABSTRACT_ALPHABET_NODE_HPP
 namespace GSAlphabet {
 
 class AbstractAlphabetNodeVisitor {
@@ -17,6 +18,7 @@ class AbstractAlphabetNodeVisitor {
     virtual void visitFunctionDeclaration(class FunctionDeclaration* node) = 0;
     virtual void visitConditionalStatement(
         class ConditionalStatement* node) = 0;
+    virtual void visitForLoop(class ForLoop* node) = 0;
     virtual ~AbstractAlphabetNodeVisitor() = default;
 };
 
@@ -30,3 +32,4 @@ inline void AbstractAlphabetNodeVisitor::visit(AbstractAlphabetNode* node) {
     node->accept(this);
 }
 }  // namespace GSAlphabet
+#endif

@@ -1,6 +1,5 @@
 #pragma once
-#pragma once
-#include "symbol.hpp"
+#include <utility>
 namespace GSAlphabet {
 enum UnaryOperator { INVOCATION, INCREMENT, DECREMENT, LOGICAL_NOT };
 inline std::string toString(const UnaryOperator op) {

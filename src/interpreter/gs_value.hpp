@@ -41,6 +41,8 @@ struct gs_value {  // TODO: Switch to using unique ptr, or maybe the object
     [[nodiscard]] gs_value operator*(const gs_value& rhs) const;
     [[nodiscard]] gs_value operator/(const gs_value& rhs) const;
     [[nodiscard]] gs_value operator==(const gs_value& rhs) const;
+    gs_value operator++();
+    gs_value operator--();
     [[nodiscard]] gs_value operator<(const gs_value& rhs) const;
     [[nodiscard]] gs_value operator<=(const gs_value& rhs) const;
     [[nodiscard]] gs_value operator>(const gs_value& rhs) const;

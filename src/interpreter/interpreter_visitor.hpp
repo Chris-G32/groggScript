@@ -23,6 +23,7 @@ class InterpreterVisitor : public GSAlphabet::AbstractAlphabetNodeVisitor {
     void visitUnaryExpression(GSAlphabet::UnaryExpression* node) override;
     void visitSymbol(GSAlphabet::Symbol* node) override;
     void visitLiteral(GSAlphabet::Literal* node) override;
+    void visitForLoop(GSAlphabet::ForLoop* node) override;
     void visitCallExpression(GSAlphabet::CallExpression* node) override;
     void visitFunctionDeclaration(
         GSAlphabet::FunctionDeclaration* node) override;
@@ -37,11 +38,11 @@ class InterpreterVisitor : public GSAlphabet::AbstractAlphabetNodeVisitor {
 
    private:
     void registerNativeFunction(GsNativeFunction& foo) {
-        pEnvironment.globals.initializeSymbol(foo.name, gs_value(&foo));
+        mEnvironment_.globals.initializeSymbol(foo.name, gs_value(&foo));
     }
     std::optional<gs_value> _exprResult = std::nullopt;
     bool _returnFlag = false;
-    InterpreterState pEnvironment;
+    InterpreterState mEnvironment_;
 };
 }  // namespace GsInterpreter
 #endif

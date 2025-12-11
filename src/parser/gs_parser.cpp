@@ -2,6 +2,7 @@
 
 #include "../concrete_syntax_tree/alphabet/binary_expression.hpp"
 #include "../concrete_syntax_tree/alphabet/conditional_statement.hpp"
+#include "../concrete_syntax_tree/alphabet/for_loop.hpp"
 #include "../concrete_syntax_tree/alphabet/function_declaration.hpp"
 #include "../concrete_syntax_tree/alphabet/literal.hpp"
 #include "../concrete_syntax_tree/alphabet/symbol.hpp"
@@ -45,6 +46,22 @@ unique_ptr<Statement> GsParser::statement() {
         expect(TokenType::CLOSE_CURLY_BRACE);
         return std::make_unique<ConditionalStatement>(std::move(cond),
                                                       std::move(body));
+    } else if (accept(TokenType::FOR_KEYWORD)) {
+        expect(TokenType::OPEN_PARENTHESES);
+        auto init = statement();
+        auto cond = expression();
+        expect(TokenType::SEMICOLON);
+        auto update = expression();
+        expect(TokenType::CLOSE_PARENTHESES);
+        expect(TokenType::OPEN_CURLY_BRACE);
+        auto body = statements();
+        if (body == nullptr) {
+            std::cerr << "Empty for loop body, this is likely an error"
+                      << std::endl;
+        }
+        expect(TokenType::CLOSE_CURLY_BRACE);
+        return std::make_unique<ForLoop>(std::move(init), std::move(cond),
+                                         std::move(update), std::move(body));
     } else if (auto varDecl = variableDeclaration(); varDecl != nullptr) {
         stmt = std::make_unique<Statement>(std::move(varDecl));
     } else if (auto varAssign = variableAssignment(); varAssign != nullptr) {
@@ -125,6 +142,7 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         if (auto op = getUnaryOperator(_current->token)) {
             expr =
                 std::make_unique<UnaryExpression>(std::move(expr), op.value());
+            advance();
         } else if (accept(TokenType::OPEN_PARENTHESES)) {
             std::vector<std::unique_ptr<AbstractAlphabetNode>> args;
             while (auto param = expression()) {
@@ -140,7 +158,8 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         return expr;
     };
     /* This will be for negating stuff
-     *    auto unaryExpr = [this,
+     *
+         auto unaryExpr = [this,
                           primaryExpression]() ->
        unique_ptr<AbstractAlphabetNode> { auto expr = primaryExpression(); if
        (expr == nullptr) { return nullptr;
@@ -151,7 +170,8 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
        op.value()); advance();
             }
             return expr;
-        };*/
+        };
+        */
     auto multiplicativeExpr =
         [this, postfixExpr]() -> unique_ptr<AbstractAlphabetNode> {
         auto expr = postfixExpr();

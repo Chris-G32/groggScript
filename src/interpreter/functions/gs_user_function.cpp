@@ -13,9 +13,9 @@ std::optional<gs_value> GsUserFunction::call(InterpreterVisitor* interpreter,
     for (size_t i = 0; i < parameters.size(); ++i) {
         bindings.initializeSymbol(parameters[i].name, args[i]);
     }
-    interpreter->pEnvironment.push(bindings);
+    interpreter->mEnvironment_.push(bindings);
     interpreter->visit(body);
-    interpreter->pEnvironment.pop();
+    interpreter->mEnvironment_.pop();
     return interpreter->_exprResult;
 }
 }  // namespace GsInterpreter

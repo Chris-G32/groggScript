@@ -175,12 +175,16 @@ void GroggScript::Tokenizer::generateTokens() {
                         working.append(1, next);
                         next = advance();
                     }
+
                     if (working == IF_KEYWORD_STR) {
                         _tokens.push_back({TokenType::IF_KEYWORD, working});
                         break;
                     } else if (working == INTEGER_TYPE_KEYWORD) {
                         _tokens.push_back(
                             {TokenType::RESERVED_INTEGER_TYPE, working});
+                        break;
+                    } else if (working == "for") {
+                        _tokens.push_back({TokenType::FOR_KEYWORD, working});
                         break;
                     } else if (working == STRING_TYPE_KEYWORD) {
                         _tokens.push_back(

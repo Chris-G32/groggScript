@@ -38,6 +38,9 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
         printNodeName("statement");
         printChild("child", node->child);
     }
+    void visitForLoop(ForLoop* node) override {
+        printNodeName("for_loop(contents_TODO)");  // TODO: Print contents
+    }
     void visitVariableDeclaration(VariableDeclaration* node) override {
         printNodeName("variable_declaration");
         if (node->type) {
