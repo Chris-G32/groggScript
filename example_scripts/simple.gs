@@ -16,7 +16,22 @@ if(val>diff){
 add_or_subtract(x,x2);
 print(res);*/
 
-for (var a=1;a<11;a++){
-var str=toString(a)+"\n";
-print(str);
+fn fib(number:int)->int{
+if number < 2{return number;}
+var prev1=1;
+var prev2=0;
+var current=0;
+for(var a=1;a<number;a++){
+current=prev1+prev2;
+prev2=prev1;
+prev1=current;
+
+}
+return current;
+}
+
+for(var i=0;i<10000;i++){
+var res=fib(i);
+var printme="Fib ("+toString(i)+") = "+toString(res);
+print(printme);
 }

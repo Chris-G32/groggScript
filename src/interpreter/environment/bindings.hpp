@@ -28,8 +28,8 @@ class Bindings {
     void clear() { mSymbols_.clear(); }
 
    private:
-    std::unordered_map<std::string, std::optional<gs_value>> mSymbols_;
     Bindings* mParent_;
+    std::unordered_map<std::string, std::optional<gs_value>> mSymbols_;
 };
 }  // namespace GsInterpreter
 #endif  // GROGGSCRIPT_BINDINGS_HPP

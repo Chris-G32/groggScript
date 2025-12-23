@@ -9,9 +9,9 @@ std::optional<gs_value> GsUserFunction::call(InterpreterVisitor* interpreter,
         throw std::runtime_error("Too few parameters provided for function: " +
                                  name);
     }
-    Bindings bindings;
+    auto bindings = new Bindings();
     for (size_t i = 0; i < parameters.size(); ++i) {
-        bindings.initializeSymbol(parameters[i].name, args[i]);
+        bindings->initializeSymbol(parameters[i].name, args[i]);
     }
     interpreter->mEnvironment_.push(bindings);
     interpreter->visit(body);

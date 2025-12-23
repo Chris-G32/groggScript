@@ -1,4 +1,6 @@
 #include "bindings.hpp"
+
+#include <format>
 namespace GsInterpreter {
 void throw_redeclare(const std::string& identifier) {
     throw std::runtime_error("Attempted to redeclare variable '" + identifier +
@@ -11,12 +13,17 @@ std::optional<gs_value>& Bindings::getSymbol(const std::string& identifier) {
     if (mParent_) {
         return mParent_->getSymbol(identifier);
     }
-    throw std::runtime_error("Symbol '" + identifier + "not declared in scope");
+    throw std::runtime_error(
+        std::format("Symbol '{}' not declared in scope", identifier));
 }
 void Bindings::assignSymbol(const std::string& identifier,
                             std::optional<gs_value> value) {
     if (const auto& it = mSymbols_.find(identifier); it != mSymbols_.end()) {
         it->second = std::move(value);
+        return;
+    }
+    if (mParent_ != nullptr) {
+        mParent_->assignSymbol(identifier, std::move(value));
         return;
     }
     throw std::runtime_error(

@@ -149,7 +149,13 @@ void InterpreterVisitor::visitUnaryExpression(UnaryExpression* node) {
         throw_expected_non_void_expression();
     }
     if (node->op == INCREMENT) {
-        setExprResult(++(*res));
+        auto incremented = ++(*res);
+        if (auto symbol = dynamic_cast<Symbol*>(node->node.get());
+            symbol != nullptr) {
+            mEnvironment_.getDefaultScope().assignSymbol(symbol->identifier,
+                                                         incremented);
+        }
+        setExprResult(incremented);
     } else {
         throw std::runtime_error("Operation TODO");
     }
@@ -164,7 +170,8 @@ void InterpreterVisitor::visitLiteral(Literal* node) {
 }
 
 void InterpreterVisitor::visitForLoop(ForLoop* node) {
-    InterpreterStateGuard g(mEnvironment_);
+    InterpreterStateGuard g(mEnvironment_,
+                            new Bindings(&mEnvironment_.getDefaultScope()));
     if (node->init) {
         visit(node->init.get());
     }
@@ -184,8 +191,8 @@ void InterpreterVisitor::visitForLoop(ForLoop* node) {
 
     if (node->child != nullptr) {
         while (checkCond()) {
-            InterpreterStateGuard loopScope(mEnvironment_,
-                                            Bindings(mEnvironment_.locals()));
+            InterpreterStateGuard g2(mEnvironment_,
+                                     new Bindings(&mEnvironment_.locals()));
             visit(node->child.get());
             if (node->update) {
                 visit(node->update.get());
