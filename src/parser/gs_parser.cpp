@@ -44,11 +44,13 @@ unique_ptr<Statement> GsParser::statement() {
                       << std::endl;
         }
         expect(TokenType::CLOSE_CURLY_BRACE);
-        return std::make_unique<ConditionalStatement>(std::move(cond),
-                                                      std::move(body));
+        return std::make_unique<ConditionalStatement>(std::move(cond), std::move(body));
     } else if (accept(TokenType::FOR_KEYWORD)) {
         expect(TokenType::OPEN_PARENTHESES);
-        auto init = statement();
+        std::unique_ptr<Statement> init = nullptr;
+        if (!accept(TokenType::SEMICOLON)) {
+            init = statement();
+        }
         auto cond = expression();
         expect(TokenType::SEMICOLON);
         auto update = expression();
@@ -56,12 +58,11 @@ unique_ptr<Statement> GsParser::statement() {
         expect(TokenType::OPEN_CURLY_BRACE);
         auto body = statements();
         if (body == nullptr) {
-            std::cerr << "Empty for loop body, this is likely an error"
-                      << std::endl;
+            std::cerr << "Empty for loop body, this is likely an error" << std::endl;
         }
         expect(TokenType::CLOSE_CURLY_BRACE);
-        return std::make_unique<ForLoop>(std::move(init), std::move(cond),
-                                         std::move(update), std::move(body));
+        return std::make_unique<ForLoop>(std::move(init), std::move(cond), std::move(update),
+                                         std::move(body));
     } else if (auto varDecl = variableDeclaration(); varDecl != nullptr) {
         stmt = std::make_unique<Statement>(std::move(varDecl));
     } else if (auto varAssign = variableAssignment(); varAssign != nullptr) {
@@ -89,7 +90,7 @@ std::optional<BinaryOperator> getBinaryOperator(TokenType token) {
         case TokenType::LESS_THAN:
             return std::make_optional(LESS_THAN);
         case TokenType::LESS_THAN_EQUALS:
-            return std::make_optional(LESS_THAN_EQUAL);
+            return std::make_optional(LESS_THAN_EQUALS);
         case TokenType::GREATER_THAN:
             return std::make_optional(GREATER_THAN);
         case TokenType::GREATER_THAN_EQUALS:
@@ -133,15 +134,13 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         return term();
     };
 
-    auto postfixExpr =
-        [this, primaryExpression]() -> unique_ptr<AbstractAlphabetNode> {
+    auto postfixExpr = [this, primaryExpression]() -> unique_ptr<AbstractAlphabetNode> {
         auto expr = primaryExpression();
         if (expr == nullptr) {
             return nullptr;
         }
         if (auto op = getUnaryOperator(_current->token)) {
-            expr =
-                std::make_unique<UnaryExpression>(std::move(expr), op.value());
+            expr = std::make_unique<UnaryExpression>(std::move(expr), op.value());
             advance();
         } else if (accept(TokenType::OPEN_PARENTHESES)) {
             std::vector<std::unique_ptr<AbstractAlphabetNode>> args;
@@ -152,8 +151,7 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
                 }
                 expect(TokenType::COMMA);
             }
-            expr = std::make_unique<CallExpression>(std::move(expr),
-                                                    std::move(args));
+            expr = std::make_unique<CallExpression>(std::move(expr), std::move(args));
         }
         return expr;
     };
@@ -172,8 +170,7 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
             return expr;
         };
         */
-    auto multiplicativeExpr =
-        [this, postfixExpr]() -> unique_ptr<AbstractAlphabetNode> {
+    auto multiplicativeExpr = [this, postfixExpr]() -> unique_ptr<AbstractAlphabetNode> {
         auto expr = postfixExpr();
         if (expr == nullptr) {
             return nullptr;
@@ -184,8 +181,7 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
             advance();
             if (auto rhs = postfixExpr(); rhs != nullptr) {
                 expr = std::make_unique<BinaryExpression>(
-                    std::move(expr), getBinaryOperator(op).value(),
-                    std::move(rhs));
+                    std::move(expr), getBinaryOperator(op).value(), std::move(rhs));
                 op = _current->token;
                 continue;
             }
@@ -194,8 +190,7 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         }
         return expr;
     };
-    auto additiveExpr =
-        [this, multiplicativeExpr]() -> unique_ptr<AbstractAlphabetNode> {
+    auto additiveExpr = [this, multiplicativeExpr]() -> unique_ptr<AbstractAlphabetNode> {
         auto expr = multiplicativeExpr();
         if (expr == nullptr) {
             return nullptr;
@@ -206,8 +201,7 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
             advance();
             if (auto rhs = multiplicativeExpr(); rhs != nullptr) {
                 expr = std::make_unique<BinaryExpression>(
-                    std::move(expr), getBinaryOperator(op).value(),
-                    std::move(rhs));
+                    std::move(expr), getBinaryOperator(op).value(), std::move(rhs));
                 op = _current->token;
                 continue;
             }
@@ -216,45 +210,38 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         }
         return expr;
     };
-    auto comparativeExpr =
-        [this, additiveExpr]() -> unique_ptr<AbstractAlphabetNode> {
+    auto comparativeExpr = [this, additiveExpr]() -> unique_ptr<AbstractAlphabetNode> {
         auto expr = additiveExpr();
         if (expr == nullptr) {
             return nullptr;
         }
         auto op = _current->token;
         // ReSharper disable once CppDFALoopConditionNotUpdated
-        if (op == TokenType::GREATER_THAN_EQUALS ||
-            op == TokenType::GREATER_THAN ||
+        if (op == TokenType::GREATER_THAN_EQUALS || op == TokenType::GREATER_THAN ||
             op == TokenType::LESS_THAN_EQUALS || op == TokenType::LESS_THAN) {
             advance();
             if (auto rhs = additiveExpr(); rhs != nullptr) {
                 expr = std::make_unique<BinaryExpression>(
-                    std::move(expr), getBinaryOperator(op).value(),
-                    std::move(rhs));
+                    std::move(expr), getBinaryOperator(op).value(), std::move(rhs));
             } else {
-                throw std::runtime_error(
-                    "Expected an expression after operator: " +
-                    GroggScript::tokenTypeToString(op));
+                throw std::runtime_error("Expected an expression after operator: " +
+                                         GroggScript::tokenTypeToString(op));
             }
         }
         return expr;
     };
-    auto equalityExpr =
-        [this, comparativeExpr]() -> unique_ptr<AbstractAlphabetNode> {
+    auto equalityExpr = [this, comparativeExpr]() -> unique_ptr<AbstractAlphabetNode> {
         auto expr = comparativeExpr();
         if (expr == nullptr) {
             return nullptr;
         }
         auto op = _current->token;
         // ReSharper disable once CppDFALoopConditionNotUpdated
-        while (op == TokenType::EXCLAMATION_EQUALS ||
-               op == TokenType::DOUBLE_EQUALS) {
+        while (op == TokenType::EXCLAMATION_EQUALS || op == TokenType::DOUBLE_EQUALS) {
             advance();
             if (auto rhs = comparativeExpr(); rhs != nullptr) {
                 expr = std::make_unique<BinaryExpression>(
-                    std::move(expr), getBinaryOperator(op).value(),
-                    std::move(rhs));
+                    std::move(expr), getBinaryOperator(op).value(), std::move(rhs));
 
                 op = _current->token;
                 continue;
@@ -334,8 +321,7 @@ unique_ptr<Symbol> GsParser::symbol() {
     advance();
     return sym;
 }
-std::unique_ptr<GSAlphabet::VariableDeclaration>
-GsParser::variableDeclaration() {
+std::unique_ptr<GSAlphabet::VariableDeclaration> GsParser::variableDeclaration() {
     if (!accept(TokenType::RESERVED_VAR_KEYWORD)) {
         return nullptr;
     }
@@ -343,29 +329,24 @@ GsParser::variableDeclaration() {
     auto identifier = expect(TokenType::SYMBOL).value;
     if (auto typeSpec = typeSpecifier()) {
         auto initializer = accept(TokenType::EQUALS) ? expression() : nullptr;
-        return std::make_unique<VariableDeclaration>(identifier, typeSpec,
-                                                     std::move(initializer));
+        return std::make_unique<VariableDeclaration>(identifier, typeSpec, std::move(initializer));
     }
     // If we don't specify a type in declaration, you must initialize it.
     expect(TokenType::EQUALS);
     return std::make_unique<VariableDeclaration>(identifier, expression());
 }
 std::unique_ptr<GSAlphabet::VariableAssignment> GsParser::variableAssignment() {
-    if (auto twoAhead = std::next(_current, 1);
-        twoAhead->token != TokenType::EQUALS) {
+    if (auto twoAhead = std::next(_current, 1); twoAhead->token != TokenType::EQUALS) {
         return nullptr;
     }
     auto symbolName = expect(TokenType::SYMBOL);
     expect(TokenType::EQUALS);
     if (auto expr = expression(); expr != nullptr) {
-        return std::make_unique<VariableAssignment>(std::move(symbolName.value),
-                                                    std::move(expr));
+        return std::make_unique<VariableAssignment>(std::move(symbolName.value), std::move(expr));
     }
-    throw std::runtime_error(
-        "Expected an expression after assignment operator. ");
+    throw std::runtime_error("Expected an expression after assignment operator. ");
 }
-std::unique_ptr<GSAlphabet::FunctionDeclaration>
-GsParser::functionDeclaration() {
+std::unique_ptr<GSAlphabet::FunctionDeclaration> GsParser::functionDeclaration() {
     if (!accept(TokenType::FUNCTION_MARKER)) {
         return nullptr;
     }
@@ -396,8 +377,8 @@ GsParser::functionDeclaration() {
         advance();
     }
     expect(TokenType::OPEN_CURLY_BRACE);
-    auto decl = std::make_unique<FunctionDeclaration>(functionName, parameters,
-                                                      statements(), returnType);
+    auto decl =
+        std::make_unique<FunctionDeclaration>(functionName, parameters, statements(), returnType);
     expect(TokenType::CLOSE_CURLY_BRACE);
     return decl;
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <string>
 
 #include "abstract_alphabet_node.hpp"

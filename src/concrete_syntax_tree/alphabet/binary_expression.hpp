@@ -8,7 +8,7 @@ enum BinaryOperator {
     LOGICAL_EQUALS,
     NOT_EQUALS,
     LESS_THAN,
-    LESS_THAN_EQUAL,
+    LESS_THAN_EQUALS,
     GREATER_THAN,
     GREATER_THAN_EQUALS,
     ADDITION,
@@ -28,7 +28,7 @@ inline std::string toString(const BinaryOperator op) {
             return "NOT_EQUALS";
         case LESS_THAN:
             return "LESS_THAN";
-        case LESS_THAN_EQUAL:
+        case LESS_THAN_EQUALS:
             return "LESS_THAN_EQUAL";
         case GREATER_THAN:
             return "GREATER_THAN";
@@ -49,8 +49,7 @@ inline std::string toString(const BinaryOperator op) {
 
 class BinaryExpression : public AbstractAlphabetNode {
    public:
-    BinaryExpression(std::unique_ptr<AbstractAlphabetNode> lhs,
-                     const BinaryOperator op,
+    BinaryExpression(std::unique_ptr<AbstractAlphabetNode> lhs, const BinaryOperator op,
                      std::unique_ptr<AbstractAlphabetNode> rhs)
         : left(std::move(lhs)), right(std::move(rhs)), op(op) {}
 

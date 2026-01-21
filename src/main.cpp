@@ -13,6 +13,7 @@
 #include "./parser/gs_parser.hpp"
 #include "concrete_syntax_tree/printer_visitor.hpp"
 #include "interpreter/interpreter_visitor.hpp"
+#include "type_checker/type_checker.hpp"
 volatile sig_atomic_t g_signal_status;
 typedef std::__1::vector<GroggScript::Token>::const_iterator tokenIterator;
 
@@ -20,8 +21,7 @@ void signal_handler(int signal) { g_signal_status = signal; }
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        std::cerr << "Please specify a path to a file to tokenize."
-                  << std::endl;
+        std::cerr << "Please specify a path to a file to tokenize." << std::endl;
         return 1;
     }
 
@@ -69,13 +69,21 @@ int main(int argc, char **argv) {
         DEBUG_LOG("Generating AST...");
         GsParser parser(tokenizer.getTokens());
         auto prog = parser.program();
+        GsInterpreter::TypeChecker typeChecker;
+        typeChecker.visit(prog.get());
+        if (!typeChecker.getErrors().empty()) {
+            for (const auto &e : typeChecker.getErrors()) {
+                INFO_LOG(e);
+            }
+        } else {
+            INFO_LOG("No Type Errors found.");
+        }
         DEBUG_LOG("Interpreter starting...");
         GsInterpreter::InterpreterVisitor interpreter;
         interpreter.visit(prog.get());
         DEBUG_LOG("Interpreter ended...");
     } catch (const std::runtime_error &e) {
-        std::cout << "Finished Generating With Errors\n"
-                  << e.what() << std::endl;
+        std::cout << "Finished Generating With Errors\n" << e.what() << std::endl;
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;
     } catch (...) {

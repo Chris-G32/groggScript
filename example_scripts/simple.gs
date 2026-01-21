@@ -29,9 +29,14 @@ prev1=current;
 }
 return current;
 }
-
-for(var i=0;i<10000;i++){
-var res=fib(i);
-var printme="Fib ("+toString(i)+") = "+toString(res);
-print(printme);
+var i="sa";
+if 1<i{}
+i+"s";
+i=1;
+i+1;
+var break=true;
+for(;break;){
+print("Fib ("+toString(i)+") = "+toString(fib(i)));
+i++;
+if i == 10{break=false;}
 }

@@ -9,8 +9,7 @@
 #include <variant>
 
 template <class T1, class T2, class T3>
-constexpr bool both_same_as_v =
-    std::is_same_v<T1, T3> && std::is_same_v<T2, T3>;
+constexpr bool both_same_as_v = std::is_same_v<T1, T3> && std::is_same_v<T2, T3>;
 
 template <class T1, class T2, class... SupportedType>
 constexpr bool same_and_supported =
@@ -63,17 +62,12 @@ gs_value::gs_value(gs_value_variant val) : value(val) {
         },
         val);
 }
-std::string single_quoted(const std::string& value) {
-    return "'" + value + "'";
-}
-std::string single_quoted(const gs_value_type& value) {
-    return single_quoted(to_string(value));
-}
+std::string single_quoted(const std::string& value) { return "'" + value + "'"; }
+std::string single_quoted(const gs_value_type& value) { return single_quoted(to_string(value)); }
 void gs_value::assert_matching_types(const gs_value& rhs) const {
     if (type != rhs.type) {
-        throw std::logic_error(
-            "Type mismatch. Expected: " + single_quoted(type) +
-            " Received: " + single_quoted(rhs.type));
+        throw std::logic_error("Type mismatch. Expected: " + single_quoted(type) +
+                               " Received: " + single_quoted(rhs.type));
     }
 }
 std::string to_string(const gs_value_variant& value) {
@@ -84,8 +78,7 @@ std::string to_string(const gs_value_variant& value) {
             if constexpr (std::is_same_v<T, gs_boolean>) {
                 oss << std::boolalpha;
             }
-            if constexpr (one_of_type<T, gs_string, gs_int, gs_float,
-                                      gs_boolean>) {
+            if constexpr (one_of_type<T, gs_string, gs_int, gs_float, gs_boolean>) {
                 oss << arg;
                 return oss.str();
             }
@@ -101,98 +94,22 @@ std::string to_string(const gs_value_variant& value) {
 template <class... SupportedTypes>
 struct BinaryOpVisitor {
     template <class BinaryOp>
-    static auto make(BinaryOp binaryOp, gs_value_type type,
-                     std::string_view op) {
-        return [binaryOp, type, op]<typename T0, typename T1>(
-                   T0&& lhs, T1&& rhs) -> gs_value {
+    static auto make(BinaryOp binaryOp, gs_value_type type, std::string_view op) {
+        return [binaryOp, type, op]<typename T0, typename T1>(T0&& lhs, T1&& rhs) -> gs_value {
             using TL = std::decay_t<T0>;
             using TR = std::decay_t<T1>;
 
-            if constexpr (std::is_same_v<TL, TR> &&
-                          same_and_supported<TL, TR, SupportedTypes...>) {
+            if constexpr (std::is_same_v<TL, TR> && same_and_supported<TL, TR, SupportedTypes...>) {
                 return gs_value(binaryOp(lhs, rhs));  // MUST return gs_value
             }
             std::ostringstream oss;
-            oss << "Unsupported binary operation: " << op
-                << " between values of type " << single_quoted(type) << '\n';
+            oss << "Unsupported binary operation: " << op << " between values of type "
+                << single_quoted(type) << '\n';
             throw std::logic_error(oss.str());
         };
     }
 };
 
-gs_value gs_value::operator+(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(BinaryOpVisitor<gs_int, gs_float, gs_string>::make(
-                          std::plus(), type, "addition"),
-                      value, rhs.value);
-}
-using numeric_visitor = BinaryOpVisitor<gs_int, gs_float>;
-gs_value gs_value::operator/(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    auto visitor = numeric_visitor::make(std::divides(), type, "division");
-    return std::visit(visitor, value, rhs.value);
-}
-gs_value gs_value::operator-(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(numeric_visitor::make(std::minus(), type, "subtraction"),
-                      value, rhs.value);
-}
-gs_value gs_value::operator*(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(
-        numeric_visitor::make(std::multiplies(), type, "multiplication"), value,
-        rhs.value);
-}
-using all_visitor = BinaryOpVisitor<gs_int, gs_string, gs_boolean,
-                                    gs_float>;  // TODO: support gs_object
-gs_value gs_value::operator==(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(all_visitor::make(std::equal_to(), type, "equal_to"),
-                      value, rhs.value);
-}
-
-gs_value gs_value::operator++() {
-    if (std::holds_alternative<gs_int>(value)) {
-        std::get<gs_int>(value)++;
-        return *this;
-    }
-    throw std::logic_error("Increment only allowed on integers");
-}
-gs_value gs_value::operator--() {
-    if (std::holds_alternative<gs_int>(value)) {
-        std::get<gs_int>(value)--;
-        return *this;
-    }
-    throw std::logic_error("Increment only allowed on integers");
-}
-gs_value gs_value::operator<(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(all_visitor::make(std::less(), type, "less_than"), value,
-                      rhs.value);
-}
-gs_value gs_value::operator<=(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(
-        all_visitor::make(std::less_equal(), type, "less_than_equals"), value,
-        rhs.value);
-}
-gs_value gs_value::operator>(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(all_visitor::make(std::greater(), type, "greater_than"),
-                      value, rhs.value);
-}
-gs_value gs_value::operator>=(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(
-        all_visitor::make(std::greater_equal(), type, "greater_than_equals"),
-        value, rhs.value);
-}
-gs_value gs_value::operator!=(const gs_value& rhs) const {
-    assert_matching_types(rhs);
-    return std::visit(
-        all_visitor::make(std::not_equal_to(), type, "not_equals"), value,
-        rhs.value);
-}
 bool gs_value::is_truthy() const {
     if (type == gs_value_type::EMPTY) {
         return false;
@@ -204,8 +121,7 @@ bool gs_value::is_truthy() const {
                 return val;
             } else if constexpr (std::is_same_v<T, gs_string>) {
                 return val.empty();
-            } else if constexpr (std::is_same_v<T, gs_float> ||
-                                 std::is_same_v<T, gs_int>) {
+            } else if constexpr (std::is_same_v<T, gs_float> || std::is_same_v<T, gs_int>) {
                 return true;
             }  // TODO: Function and object truthiness.
             return false;

@@ -1,4 +1,5 @@
 #pragma once
+#include <locale>
 #include <stdexcept>
 #include <string>
 #include <variant>
@@ -10,6 +11,21 @@ typedef bool boolean;
 typedef std::string text;
 typedef std::variant<integer, decimal, boolean, text> Primitive;
 
+inline std::string typeKeyword(const Primitive& value) {
+    if (std::holds_alternative<decimal>(value)) {
+        return "float";
+    }
+    if (std::holds_alternative<integer>(value)) {
+        return "int";
+    }
+    if (std::holds_alternative<boolean>(value)) {
+        return "bool";
+    }
+    if (std::holds_alternative<text>(value)) {
+        return "string";
+    }
+    return "unknown";
+}
 inline std::string to_string(const Primitive& value) {
     return std::visit(
         [](const auto& val) -> std::string {
