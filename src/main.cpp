@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
         typeChecker.visit(prog.get());
         if (!typeChecker.getErrors().empty()) {
             for (const auto &e : typeChecker.getErrors()) {
-                INFO_LOG(e);
+                ERROR_LOG(e);
             }
         } else {
             INFO_LOG("No Type Errors found.");

@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 using std::string;
-enum LogLevel { DEBUG, INFO, WARNING };
+enum LogLevel { DEBUG, INFO, WARNING, ERROR };
 struct LoggerOptions {
     bool debugEnabled = false;
     std::ostream &output = std::cout;
@@ -32,18 +32,30 @@ class GroggLog {
     void info(const char *text) const { log(INFO, text); }
     void warn(const string &text) const { log(WARNING, text); }
     void warn(const char *text) const { log(WARNING, text); }
+    void error(const string &text) const { log(ERROR, text); }
+    void error(const char *text) const { log(ERROR, text); }
 
-    void log(const LogLevel level, const string &text) const {
+    void log(const LogLevel level, const std::string &text) const {
+        constexpr const char *RESET = "\033[0m";
+        constexpr const char *RED = "\033[31m";
+        constexpr const char *GREEN = "\033[32m";
+        constexpr const char *YELLOW = "\033[33m";
+        constexpr const char *CYAN = "\033[36m";
+
         _out << "[";
+
         switch (level) {
             case DEBUG:
-                _out << "DEBUG";
-                break;
-            case WARNING:
-                _out << "WARN";
+                _out << CYAN << "DEBUG" << RESET;
                 break;
             case INFO:
-                _out << "INFO";
+                _out << GREEN << "INFO" << RESET;
+                break;
+            case WARNING:
+                _out << YELLOW << "WARN" << RESET;
+                break;
+            case ERROR:
+                _out << RED << "ERROR" << RESET;
                 break;
             default:
                 throw std::invalid_argument("Received invalid LogLevel");
@@ -52,12 +64,13 @@ class GroggLog {
     }
 
    protected:
-    GroggLog(bool debugEnabled = false, std::ostream &output = std::cout)
+    explicit GroggLog(bool debugEnabled = false, std::ostream &output = std::cout)
         : _out(output), _debugEnabled(debugEnabled) {}
     std::ostream &_out;
     bool _debugEnabled;
 };
 #define DEBUG_LOG(val) GroggLog::get().debug(val);
 #define INFO_LOG(val) GroggLog::get().info(val);
+#define ERROR_LOG(val) GroggLog::get().error(val);
 
 #endif
