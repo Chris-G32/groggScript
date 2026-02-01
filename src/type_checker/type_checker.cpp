@@ -78,7 +78,7 @@ void TypeChecker::visitBinaryExpression(GSAlphabet::BinaryExpression* node) {
     using namespace GsTruthTables;
     auto spec = getBySymbol(fromAst(node->op));
     if (node->left == nullptr && node->right == nullptr) {
-        addError_(std::format("Operator {} requires a left and a right side.",
+        addError_(std::format("Operator {} requires a left and a right side",
                               GSAlphabet::toString(node->op)));
         return;
     }
@@ -97,8 +97,10 @@ void TypeChecker::visitBinaryExpression(GSAlphabet::BinaryExpression* node) {
                 });
     auto entry = std::ranges::find(view, std::make_tuple(*leftType, *rightType));
     if (entry == view.end()) {
-        addError_(std::format("Operator '{}' does not support between '{}' and '{}'",
-                              GSAlphabet::toString(node->op), *leftType, *rightType));
+        addError_(std::format(
+            "Operator '{}' does not support between '{}' and '{}' at source location '{}'",
+            GSAlphabet::toString(node->op), *leftType, *rightType,
+            formatSourceLocation(node->location())));
     }
 }
 void TypeChecker::visitCallExpression(GSAlphabet::CallExpression* node) {

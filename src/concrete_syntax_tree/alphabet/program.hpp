@@ -7,14 +7,13 @@ namespace GSAlphabet {
 
 class Program : public AbstractAlphabetNode {
    public:
-    Program(std::unique_ptr<AbstractAlphabetNode> statements)
+    explicit Program(std::unique_ptr<AbstractAlphabetNode> statements)
         : statements(std::move(statements)) {}
-    virtual void accept(AbstractAlphabetNodeVisitor* visitor) override;
+    void accept(AbstractAlphabetNodeVisitor* visitor) override;
+    [[nodiscard]] SourceLocation location() const override { return statements->location(); }
     std::unique_ptr<AbstractAlphabetNode> statements;
 };
 
-inline void Program::accept(AbstractAlphabetNodeVisitor* visitor) {
-    visitor->visitProgram(this);
-}
+inline void Program::accept(AbstractAlphabetNodeVisitor* visitor) { visitor->visitProgram(this); }
 
 }  // namespace GSAlphabet

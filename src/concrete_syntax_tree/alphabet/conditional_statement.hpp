@@ -16,6 +16,7 @@ class ConditionalStatement : public Statement {
     void accept(AbstractAlphabetNodeVisitor *visitor) override {
         visitor->visitConditionalStatement(this);
     }
+    [[nodiscard]] SourceLocation location() const override { return condition->location(); }
     std::unique_ptr<AbstractAlphabetNode> condition;
 };
 }  // namespace GSAlphabet

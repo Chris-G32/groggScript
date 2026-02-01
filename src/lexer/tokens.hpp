@@ -14,7 +14,6 @@ enum class TokenType {
     // Mostly for arithmetic
     ASTERISK,
     FORWARD_SLASH,
-    DOUBLE_FORWARD_SLASH,
     COMMENT,
     PLUS,
     DOUBLE_DASH,
@@ -38,6 +37,7 @@ enum class TokenType {
     PIPE,
     OR,
     AND,
+    ARROW,  // ->
     // Symbols and stuff
     INTEGER,
     FLOAT,
@@ -61,15 +61,23 @@ enum class TokenType {
     RETURN_KEYWORD,
     IF_KEYWORD,
     FOR_KEYWORD,
+    ERROR
 };
 
 struct Token {
     TokenType token;
     string value;
+    // Todo: Migrate to using source location instead of line and column
+    size_t line;
+    size_t column;
+    size_t length;
 };
+
 const Token NULL_TOKEN = {TokenType::NULL_TOKEN, ""};
 inline string tokenTypeToString(TokenType type) {
     switch (type) {
+        case TokenType::ARROW:
+            return "arrow";
         case TokenType::ASTERISK:
             return "asterisk";
         case TokenType::FOR_KEYWORD:
@@ -82,8 +90,6 @@ inline string tokenTypeToString(TokenType type) {
             return "semicolon";
         case TokenType::FORWARD_SLASH:
             return "forward_slash";
-        case TokenType::DOUBLE_FORWARD_SLASH:
-            return "double_forward_slash";
         case TokenType::PLUS:
             return "plus";
         case TokenType::DOUBLE_PLUS:
@@ -158,6 +164,8 @@ inline string tokenTypeToString(TokenType type) {
             return "close_parenthesis";
         case TokenType::RESERVED_VAR_KEYWORD:
             return "var";
+        case TokenType::ERROR:
+            return "error";
         default:
             return "unknown_token";
     }

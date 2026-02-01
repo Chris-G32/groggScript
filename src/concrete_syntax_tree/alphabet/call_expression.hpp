@@ -27,9 +27,8 @@ class CallExpression : public AbstractAlphabetNode {
      * @param args Arguments for that function, if this known to be empty,
      * prefer calling the constructor without args parameter
      */
-    explicit CallExpression(
-        std::unique_ptr<AbstractAlphabetNode> callee,
-        std::vector<std::unique_ptr<AbstractAlphabetNode>>&& args)
+    explicit CallExpression(std::unique_ptr<AbstractAlphabetNode> callee,
+                            std::vector<std::unique_ptr<AbstractAlphabetNode>>&& args)
         : CallExpression(std::move(callee)) {
         arguments = std::move(args);
     }
@@ -37,6 +36,7 @@ class CallExpression : public AbstractAlphabetNode {
     std::vector<std::unique_ptr<AbstractAlphabetNode>> arguments;
     void accept(AbstractAlphabetNodeVisitor* visitor) override {
         visitor->visitCallExpression(this);
-    };
+    }
+    [[nodiscard]] SourceLocation location() const override { return callee->location(); };
 };
 }  // namespace GSAlphabet

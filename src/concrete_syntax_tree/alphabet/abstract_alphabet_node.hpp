@@ -1,5 +1,6 @@
 #ifndef ABSTRACT_ALPHABET_NODE_HPP
 #define ABSTRACT_ALPHABET_NODE_HPP
+#include "../../gs_lib/source_location.hpp"
 namespace GSAlphabet {
 
 class AbstractAlphabetNodeVisitor {
@@ -16,20 +17,17 @@ class AbstractAlphabetNodeVisitor {
     virtual void visitSymbol(class Symbol* node) = 0;
     virtual void visitLiteral(class Literal* node) = 0;
     virtual void visitFunctionDeclaration(class FunctionDeclaration* node) = 0;
-    virtual void visitConditionalStatement(
-        class ConditionalStatement* node) = 0;
+    virtual void visitConditionalStatement(class ConditionalStatement* node) = 0;
     virtual void visitForLoop(class ForLoop* node) = 0;
     virtual ~AbstractAlphabetNodeVisitor() = default;
 };
-
 class AbstractAlphabetNode {
    public:
     virtual ~AbstractAlphabetNode() = default;
     virtual void accept(AbstractAlphabetNodeVisitor* visitor) = 0;
+    [[nodiscard]] virtual SourceLocation location() const = 0;
 };
 
-inline void AbstractAlphabetNodeVisitor::visit(AbstractAlphabetNode* node) {
-    node->accept(this);
-}
+inline void AbstractAlphabetNodeVisitor::visit(AbstractAlphabetNode* node) { node->accept(this); }
 }  // namespace GSAlphabet
 #endif

@@ -18,13 +18,13 @@ inline std::string toString(const UnaryOperator op) {
 }
 class UnaryExpression : public AbstractAlphabetNode {
    public:
-    UnaryExpression(std::unique_ptr<AbstractAlphabetNode> node,
-                    const UnaryOperator op)
+    UnaryExpression(std::unique_ptr<AbstractAlphabetNode> node, const UnaryOperator op)
         : node(std::move(node)), op(op) {}
     std::unique_ptr<AbstractAlphabetNode> node;
     UnaryOperator op;
     void accept(AbstractAlphabetNodeVisitor* visitor) override {
         visitor->visitUnaryExpression(this);
     }
+    [[nodiscard]] SourceLocation location() const override { return node->location(); }
 };
 }  // namespace GSAlphabet

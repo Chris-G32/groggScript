@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "./lexer/tokenizer.hpp"
+#include "./lexer/lexer.h"
 #include "./logger/logger.hpp"
 #include "./parser/gs_parser.hpp"
 #include "concrete_syntax_tree/printer_visitor.hpp"
@@ -61,13 +61,20 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    GroggScript::Tokenizer tokenizer(fileContents);
+    GroggScript::Tokenizer2 tokenizer(fileContents);
 
+    std::vector<Token> tokens;
     try {
-        tokenizer.generateTokens();
+        for (;;) {
+            auto token = tokenizer.nextToken();
+            tokens.push_back(token);
+            if (token.token == TokenType::END_OF_FILE) {
+                break;
+            }
+        }
         DEBUG_LOG("Tokens generated successfully.");
         DEBUG_LOG("Generating AST...");
-        GsParser parser(tokenizer.getTokens());
+        GsParser parser(tokens);
         auto prog = parser.program();
         GsInterpreter::TypeChecker typeChecker;
         typeChecker.visit(prog.get());
@@ -89,9 +96,25 @@ int main(int argc, char **argv) {
     } catch (...) {
         std::cout << "Unexpected error encountered\n";
     }
-    std::cout << "Print verbose? (y\\N)\n";
+    std::cout << "Print? (v\\y\\N)\n";
     string verbose;
     std::cin >> verbose;
-    tokenizer.printTags(std::cout, !(verbose == "y" || verbose == "Y"));
+    bool verboseFlag;
+    if (verbose == "Y" || verbose == "y") {
+        verboseFlag = false;
+    } else if (verbose == "v" || verbose == "V") {
+        verboseFlag = true;
+    } else {
+        return 0;
+    }
+    for (const auto &token : tokens) {
+        auto stringRepr = GroggScript::tokenTypeToString(token.token);
+        if (verboseFlag) {
+            std::cout << '<' << stringRepr << '>' << token.value;
+        }
+        std::cout << '<' << stringRepr << "/>" << '\n';
+    }
+    std::cout << '\n';
+    // tokenizer.printTags(std::cout, !(verbose == "y" || verbose == "Y"));
     return 0;
 }

@@ -4,6 +4,7 @@
 
 #ifndef GROGGSCRIPT_TYPE_CHECKER_HPP
 #define GROGGSCRIPT_TYPE_CHECKER_HPP
+#include <format>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -33,6 +34,9 @@ class TypeChecker : public GSAlphabet::AbstractAlphabetNodeVisitor {
     const auto& getErrors() { return errors_; }
 
    private:
+    std::string formatSourceLocation(const SourceLocation& loc) {
+        return std::format("{}:{}", loc.line, loc.column);
+    }
     void addError_(const std::string& errorMessage);
     std::optional<std::string> popTypeResult();
     std::vector<std::string> errors_;

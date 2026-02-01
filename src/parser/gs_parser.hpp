@@ -6,7 +6,8 @@
 #include "../concrete_syntax_tree/alphabet/variable_assignment.hpp"
 #include "../concrete_syntax_tree/alphabet/variable_declaration.hpp"
 #include "../lexer/lexer.h"
-
+using GroggScript::Token;
+using GroggScript::TokenType;
 class GsParser {
    public:
     explicit GsParser(const std::vector<Token>& tokens)
@@ -26,6 +27,9 @@ class GsParser {
     std::optional<std::string> typeSpecifier();
 
    protected:
+    static SourceLocation locationOf(const Token& token) {
+        return {.line = token.line, .column = token.column};
+    }
     /**
      * Expects a token and advances the stream if encountered, throws otherwise.
      * @param expected Expected token

@@ -56,9 +56,9 @@ class BinaryExpression : public AbstractAlphabetNode {
     std::unique_ptr<AbstractAlphabetNode> left;
     std::unique_ptr<AbstractAlphabetNode> right;
     BinaryOperator op;
-
     void accept(AbstractAlphabetNodeVisitor* visitor) override {
         visitor->visitBinaryExpression(this);
     }
+    [[nodiscard]] SourceLocation location() const override { return left->location(); }
 };
 }  // namespace GSAlphabet

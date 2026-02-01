@@ -19,9 +19,8 @@ class ForLoop : public Statement {
     std::unique_ptr<AbstractAlphabetNode> condition;
     std::unique_ptr<AbstractAlphabetNode> update;
 
-    void accept(AbstractAlphabetNodeVisitor* visitor) override {
-        visitor->visitForLoop(this);
-    }
+    void accept(AbstractAlphabetNodeVisitor* visitor) override { visitor->visitForLoop(this); }
+    [[nodiscard]] SourceLocation location() const override { return init->location(); };
 };
 }  // namespace GSAlphabet
 #endif  // GROGGSCRIPT_FOR_LOOP_HPP
