@@ -82,6 +82,7 @@ inline OperatorSymbol fromAst(const GSAlphabet::UnaryOperator& op) {
             throw std::runtime_error("Unsupported unary operator");
     }
 }
+
 struct OperatorSpecification {
     OperatorSymbol symbol;
     unsigned char arity;  // Usually 1 or 2
@@ -90,6 +91,7 @@ struct OperatorSpecification {
     // second option when arity is 1
     std::vector<std::tuple<GsInterpreter::gs_value_type, GsInterpreter::gs_value_type>>
         supportedTypes;
+    std::function<std::string(const std::string&, const std::string&)> returnType;
 };
 std::vector<OperatorSpecification> operatorSpecifications();
 GsInterpreter::gs_value invoke(const OperatorSymbol symbol,

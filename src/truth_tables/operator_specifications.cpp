@@ -11,10 +11,10 @@ namespace GsTruthTables {
 using namespace GsInterpreter;
 using Args = std::vector<gs_value>;
 
-#define UNARY_OP_SUPPORTED(opname, op)     \
-    template <typename A>                  \
-    concept Subtractable = requires(A a) { \
-        { a op };                          \
+#define UNARY_OP_SUPPORTED(opname, op) \
+    template <typename A>              \
+    concept opname = requires(A a) {   \
+        { a op };                      \
     }
 #define BINARY_OP_SUPPORTED(opname, op)   \
     template <typename A, typename B>     \
@@ -104,33 +104,42 @@ gs_value unary_op(const Args& args, Op op, const char* opname) {
         },
         args[0].value);
 }
-
+static std::string returnsLhs(const std::string& lhs, const std::string& rhs) { return lhs; }
+auto returnsType(const gs_value_type& t) {
+    return [t](const std::string& lhs, const std::string& rhs) { return to_string(t); };
+}
 static std::vector<OperatorSpecification> operatorDefinitions = {
     {.symbol = OperatorSymbol("++"),
      .arity = UNARY,
      .operation = increment,
-     .supportedTypes = {unaryOp(gs_value_type::INTEGER)}},
+     .supportedTypes = {unaryOp(gs_value_type::INTEGER)},
+     .returnType = returnsLhs},
     {.symbol = OperatorSymbol("--"),
      .arity = UNARY,
      .operation = decrement,
-     .supportedTypes = {unaryOp(gs_value_type::INTEGER)}},
+     .supportedTypes = {unaryOp(gs_value_type::INTEGER)},
+     .returnType = returnsLhs},
     {.symbol = OperatorSymbol("+"),
      .arity = BINARY,
      .operation = [](auto& a) { return binary_op(a, std::plus{}, "Add"); },
      .supportedTypes = {sameTypes(gs_value_type::INTEGER), sameTypes(gs_value_type::FLOAT),
-                        sameTypes(gs_value_type::STRING)}},
+                        sameTypes(gs_value_type::STRING)},
+     .returnType = returnsLhs},
     {.symbol = OperatorSymbol("-"),
      .arity = BINARY,
      .operation = [](auto& a) { return binary_op(a, std::minus{}, "Subtract"); },
-     .supportedTypes = integral},
+     .supportedTypes = integral,
+     .returnType = returnsLhs},
     {.symbol = OperatorSymbol("*"),
      .arity = BINARY,
      .operation = [](auto& a) { return binary_op(a, std::multiplies{}, "Multiply"); },
-     .supportedTypes = integral},
+     .supportedTypes = integral,
+     .returnType = returnsLhs},
     {.symbol = OperatorSymbol("/"),
      .arity = BINARY,
      .operation = [](auto& a) { return binary_op(a, std::divides{}, "Divide"); },
-     .supportedTypes = integral},
+     .supportedTypes = integral,
+     .returnType = returnsLhs},
     {.symbol = OperatorSymbol("=="),
      .arity = BINARY,
      .operation =
@@ -147,22 +156,26 @@ static std::vector<OperatorSpecification> operatorDefinitions = {
                  args[0].value, args[1].value);
          },
      .supportedTypes = {sameTypes(gs_value_type::INTEGER), sameTypes(gs_value_type::FLOAT),
-                        sameTypes(gs_value_type::STRING), sameTypes(gs_value_type::BOOLEAN)}},
+                        sameTypes(gs_value_type::STRING), sameTypes(gs_value_type::BOOLEAN)},
+     .returnType = returnsType(gs_value_type::BOOLEAN)},
     {.symbol = OperatorSymbol("<"),
      .arity = BINARY,
      .operation = LOGICAL_OP_LAMBDA(<, "LessThan", gs_int, gs_float, gs_string),
      .supportedTypes = {sameTypes(gs_value_type::INTEGER), sameTypes(gs_value_type::FLOAT),
-                        sameTypes(gs_value_type::STRING)}},
+                        sameTypes(gs_value_type::STRING)},
+     .returnType = returnsType(gs_value_type::BOOLEAN)},
     {.symbol = OperatorSymbol("<="),
      .arity = BINARY,
      .operation = LOGICAL_OP_LAMBDA(<=, "LessThanEquals", gs_int, gs_float, gs_string),
      .supportedTypes = {sameTypes(gs_value_type::INTEGER), sameTypes(gs_value_type::FLOAT),
-                        sameTypes(gs_value_type::STRING)}},
+                        sameTypes(gs_value_type::STRING)},
+     .returnType = returnsType(gs_value_type::BOOLEAN)},
     {.symbol = OperatorSymbol(">"),
      .arity = BINARY,
      .operation = LOGICAL_OP_LAMBDA(<, "GreaterThan", gs_int, gs_float, gs_string),
      .supportedTypes = {sameTypes(gs_value_type::INTEGER), sameTypes(gs_value_type::FLOAT),
-                        sameTypes(gs_value_type::STRING)}}};
+                        sameTypes(gs_value_type::STRING)},
+     .returnType = returnsType(gs_value_type::BOOLEAN)}};
 std::vector<OperatorSpecification> operatorSpecifications() { return operatorDefinitions; }
 gs_value invoke(const OperatorSymbol symbol, const std::vector<gs_value>& args) {
     for (const auto& op : operatorDefinitions) {

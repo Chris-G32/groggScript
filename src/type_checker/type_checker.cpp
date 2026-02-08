@@ -95,13 +95,15 @@ void TypeChecker::visitBinaryExpression(GSAlphabet::BinaryExpression* node) {
                     auto str2 = to_string(std::get<1>(val));
                     return std::make_tuple(str1, str2);
                 });
-    auto entry = std::ranges::find(view, std::make_tuple(*leftType, *rightType));
-    if (entry == view.end()) {
+    if (const auto entry = std::ranges::find(view, std::make_tuple(*leftType, *rightType));
+        entry == view.end()) {
         addError_(std::format(
             "Operator '{}' does not support between '{}' and '{}' at source location '{}'",
             GSAlphabet::toString(node->op), *leftType, *rightType,
             formatSourceLocation(node->location())));
+        return;
     }
+    typeResult_ = spec.returnType(*leftType, *rightType);
 }
 void TypeChecker::visitCallExpression(GSAlphabet::CallExpression* node) {
     DEBUG_LOG("Call expression type checking not implemented");
