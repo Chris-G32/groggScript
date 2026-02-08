@@ -1,0 +1,48 @@
+program:
+  statements:
+    statements:
+      - statement:
+        child:
+          binary_expression:
+            left:
+              term:
+                symbol:
+                  identifier:
+                    "a"
+            operator:
+              "ADDITION"
+            right:
+              term:
+                literal:
+                  type:
+                    "integer"
+                  value: 12
+      - statement:
+        child:
+          binary_expression:
+            left:
+              term:
+                symbol:
+                  identifier:
+                    "b"
+            operator:
+              "ADDITION"
+            right:
+              unary_expression:
+                child:
+                  binary_expression:
+                    left:
+                      term:
+                        literal:
+                          type:
+                            "integer"
+                          value: 12
+                    operator:
+                      "SUBTRACTION"
+                    right:
+                      term:
+                        literal:
+                          type:
+                            "integer"
+                          value: 3
+                operation: "--"

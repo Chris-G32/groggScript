@@ -4,87 +4,104 @@
 #include <string>
 using std::string;
 
-namespace GroggScript
-{
+namespace GroggScript {
 
-    enum class TokenType
-    {
-        // Token value representing null, not intended to store any data, gets around having to use pointer null bs.
-        NULL_TOKEN,
-        // Mostly for arithmetic
-        ASTERISK,
-        FORWARD_SLASH,
-        DOUBLE_FORWARD_SLASH,
-        COMMENT,
-        PLUS,
-        DOUBLE_PLUS,
-        DASH,
-        PERCENT,
-        DOT,
-        COLON,
-        END_OF_FILE,
-        // Mostly Booleans
-        EXCLAMATION,
-        EXCLAMATION_EQUALS,
-        LESS_THAN,
-        GREATER_THAN,
-        EQUALS,
-        DOUBLE_EQUALS,
-        LESS_THAN_EQUALS,
-        GREATER_THAN_EQUALS,
-        PIPE,
-        OR,
-        AND,
-        // Symbols and stuff
-        INTEGER,
-        FLOAT,
-        WHITE_SPACE,
-        STRING_VALUE,
-        SYMBOL,
-        OPEN_BRACKET,
-        CLOSE_BRACKET,
-        OPEN_PARENTHESES,
-        CLOSE_PARENTHESES,
-        OPEN_CURLY_BRACE,
-        CLOSE_CURLY_BRACE,
-        RESERVED_INTEGER_TYPE,
-        RESERVED_STRING_TYPE,
-        RESERVED_BOOLEAN_TYPE,
-        TRUE,
-        FALSE,
-        RESERVED_VAR_KEYWORD
-    };
+enum class TokenType {
+    // Token value representing null, not intended to store any data, gets
+    // around having to use pointer null bs.
+    NULL_TOKEN,
+    FUNCTION_MARKER,  // fn
+    // Mostly for arithmetic
+    ASTERISK,
+    FORWARD_SLASH,
+    COMMENT,
+    PLUS,
+    DOUBLE_DASH,
+    DOUBLE_PLUS,
+    DASH,
+    PERCENT,
+    DOT,
+    DOUBLE_DOT,
+    COLON,
+    SEMICOLON,
+    END_OF_FILE,
+    // Mostly Booleans
+    EXCLAMATION,
+    EXCLAMATION_EQUALS,
+    LESS_THAN,
+    GREATER_THAN,
+    EQUALS,
+    DOUBLE_EQUALS,
+    LESS_THAN_EQUALS,
+    GREATER_THAN_EQUALS,
+    PIPE,
+    OR,
+    AND,
+    ARROW,  // ->
+    // Symbols and stuff
+    INTEGER,
+    FLOAT,
+    WHITE_SPACE,
+    STRING_VALUE,
+    SYMBOL,
+    COMMA,
+    OPEN_BRACKET,
+    CLOSE_BRACKET,
+    OPEN_PARENTHESES,
+    CLOSE_PARENTHESES,
+    OPEN_CURLY_BRACE,
+    CLOSE_CURLY_BRACE,
+    RESERVED_INTEGER_TYPE,
+    RESERVED_FLOAT_TYPE,
+    RESERVED_STRING_TYPE,
+    RESERVED_BOOLEAN_TYPE,
+    TRUE,
+    FALSE,
+    RESERVED_VAR_KEYWORD,
+    RETURN_KEYWORD,
+    IF_KEYWORD,
+    FOR_KEYWORD,
+    ERROR
+};
 
-    struct Token
-    {
-        TokenType token;
-        string value;
-    };
-    const Token NULL_TOKEN = {TokenType::NULL_TOKEN, ""};
-    inline string tokenTypeToString(TokenType type)
-    {
-        switch (type)
-        {
+struct Token {
+    TokenType token;
+    string value;
+    // Todo: Migrate to using source location instead of line and column
+    size_t line;
+    size_t column;
+    size_t length;
+};
+
+const Token NULL_TOKEN = {TokenType::NULL_TOKEN, ""};
+inline string tokenTypeToString(TokenType type) {
+    switch (type) {
+        case TokenType::ARROW:
+            return "arrow";
         case TokenType::ASTERISK:
             return "asterisk";
+        case TokenType::FOR_KEYWORD:
+            return "for";
+        case TokenType::IF_KEYWORD:
+            return "if";
         case TokenType::COLON:
             return "colon";
+        case TokenType::SEMICOLON:
+            return "semicolon";
         case TokenType::FORWARD_SLASH:
             return "forward_slash";
-        case TokenType::DOUBLE_FORWARD_SLASH:
-            return "double_forward_slash";
         case TokenType::PLUS:
             return "plus";
         case TokenType::DOUBLE_PLUS:
             return "double_plus";
+        case TokenType::DOUBLE_DASH:
+            return "double_dash";
         case TokenType::DASH:
             return "dash";
         case TokenType::PERCENT:
             return "percent";
-
         case TokenType::END_OF_FILE:
             return "end_of_file";
-
         case TokenType::EXCLAMATION:
             return "exclamation";
         case TokenType::EXCLAMATION_EQUALS:
@@ -117,6 +134,8 @@ namespace GroggScript
             return "white_space";
         case TokenType::RESERVED_INTEGER_TYPE:
             return "int";
+        case TokenType::RESERVED_FLOAT_TYPE:
+            return "float";
         case TokenType::RESERVED_STRING_TYPE:
             return "string";
         case TokenType::RESERVED_BOOLEAN_TYPE:
@@ -140,17 +159,18 @@ namespace GroggScript
         case TokenType::FALSE:
             return "false";
         case TokenType::OPEN_PARENTHESES:
-            return "open_parenthese";
+            return "open_parenthesis";
         case TokenType::CLOSE_PARENTHESES:
-            return "close_parenthese";
+            return "close_parenthesis";
         case TokenType::RESERVED_VAR_KEYWORD:
             return "var";
-
+        case TokenType::ERROR:
+            return "error";
         default:
             return "unknown_token";
-        }
     }
-
 }
+
+}  // namespace GroggScript
 
 #endif

@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/GroggScript",
-            "args": ["example_scripts/testall.gs","-d"],
+            "args": ["example_scripts/var_decl.gs","-d"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
