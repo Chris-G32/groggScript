@@ -378,8 +378,7 @@ std::unique_ptr<GSAlphabet::FunctionDeclaration> GsParser::functionDeclaration()
     } while (accept(TokenType::COMMA));
     expect(TokenType::CLOSE_PARENTHESES);
     std::optional<std::string> returnType = std::nullopt;
-    if (accept(TokenType::DASH)) {
-        expect(TokenType::GREATER_THAN);
+    if (accept(TokenType::ARROW)) {
         // For now we will just take whatever is here instead of expecting a
         // symbol
         returnType = _current->value;
