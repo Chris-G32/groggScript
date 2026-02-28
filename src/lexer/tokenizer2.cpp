@@ -31,7 +31,7 @@ Token Tokenizer2::nextToken() {
         case '}':
             return makeToken(TokenType::CLOSE_CURLY_BRACE);
         case '[':
-            return makeToken(TokenType::OPEN_CURLY_BRACE);
+            return makeToken(TokenType::OPEN_BRACKET);
         case ']':
             return makeToken(TokenType::CLOSE_BRACKET);
         case ',':
@@ -41,7 +41,7 @@ Token Tokenizer2::nextToken() {
         case ':':
             return makeToken(TokenType::COLON);
         case '+':
-            return makeToken(match('=') ? TokenType::DOUBLE_PLUS : TokenType::PLUS);
+            return makeToken(match('+') ? TokenType::DOUBLE_PLUS : TokenType::PLUS);
         case '-':
             if (match('>')) {
                 return makeToken(TokenType::ARROW);

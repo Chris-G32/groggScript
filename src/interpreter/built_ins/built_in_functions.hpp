@@ -16,6 +16,9 @@ class GsBuiltIns {
     static GsNativeFunction print;
 
     static GsNativeFunction toString;
+    static GsNativeFunction at;
+    static GsNativeFunction atArray;
+    static GsNativeFunction length;
 };
 }  // namespace GsInterpreter
 #endif  // GROGGSCRIPT_BUILT_IN_FUNCTIONS_HPP

@@ -10,4 +10,12 @@ constexpr bool same_and_supported =
 
 template <class T, class... Ts>
 constexpr bool one_of_type = (std::is_same_v<T, Ts> || ...);
+
+template <class T, class... Ts>
+constexpr bool is_alternative_of = (std::is_same_v<T, Ts> || ...);
+
+template <typename T, typename Variant>
+concept InVariant = []<typename... Ts>(std::variant<Ts...>*) {
+    return (std::is_same_v<T, Ts> || ...);
+}(static_cast<Variant*>(nullptr));
 #endif  // GROGGSCRIPT_TYPE_UTILS_HPP

@@ -100,6 +100,8 @@ inline string tokenTypeToString(TokenType type) {
             return "dash";
         case TokenType::PERCENT:
             return "percent";
+        case TokenType::COMMA:
+            return "comma";
         case TokenType::END_OF_FILE:
             return "end_of_file";
         case TokenType::EXCLAMATION:

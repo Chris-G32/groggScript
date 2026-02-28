@@ -5,6 +5,7 @@
 #include <concepts>
 #include <format>
 
+#include "../interpreter/functions/abstract_gs_function.hpp"
 #include "../interpreter/gs_value.hpp"
 #include "../utils/type_utils.hpp"
 namespace GsTruthTables {
@@ -47,7 +48,7 @@ auto increment = [](const Args& args) -> gs_value {
     assert(arg.type == gs_value_type::INTEGER &&
            "Increment only supports integers");  // Sanity check so that this fails with
     // readable message at runtime
-    return gs_value(std::get<gs_int>(arg.value) + 1);
+    return gs_value(arg.get<gs_int>() + 1);
 };
 auto decrement = [](const Args& args) -> gs_value {
     using namespace GsInterpreter;
@@ -56,7 +57,7 @@ auto decrement = [](const Args& args) -> gs_value {
     assert(arg.type == gs_value_type::INTEGER &&
            "Decrement only supports integers");  // Sanity check so that this fails with
     // readable message at runtime
-    return gs_value(std::get<gs_int>(arg.value) - 1);
+    return gs_value(arg.get<gs_int>() - 1);
 };
 constexpr auto unaryOp = [](gs_value_type valType) {
     return std::make_tuple(valType, gs_value_type::EMPTY);

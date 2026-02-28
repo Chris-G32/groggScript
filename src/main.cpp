@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     sigIntHandler.sa_handler = signal_handler;
     sigemptyset(&sigIntHandler.sa_mask);
     sigIntHandler.sa_flags = 0;
-    sigaction(SIGINT, &sigIntHandler, NULL);
+    sigaction(SIGINT, &sigIntHandler, nullptr);
 
     std::string filePathArg(argv[1]);
     std::filesystem::path path(filePathArg);

@@ -156,21 +156,6 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
         }
         return expr;
     };
-    /* This will be for negating stuff
-     *
-         auto unaryExpr = [this,
-                          primaryExpression]() ->
-       unique_ptr<AbstractAlphabetNode> { auto expr = primaryExpression(); if
-       (expr == nullptr) { return nullptr;
-            }
-            while (auto op = getUnaryOperator(_current->token)) {
-                expr =
-                    std::make_unique<UnaryExpression>(std::move(expr),
-       op.value()); advance();
-            }
-            return expr;
-        };
-        */
     auto multiplicativeExpr = [this, postfixExpr]() -> unique_ptr<AbstractAlphabetNode> {
         auto expr = postfixExpr();
         if (expr == nullptr) {
@@ -254,27 +239,26 @@ unique_ptr<AbstractAlphabetNode> GsParser::expression() {
     };
     return equalityExpr();
 }
-// unique_ptr<UnaryExpression> GsParser::unaryExpression() {}
-// unique_ptr<BinaryExpression> GsParser::binaryExpression() {
-//     auto lhs = term();
-//     if (lhs == nullptr) {
-//         return nullptr;
-//     }
-//     std::optional<BinaryOperator> op = getBinaryOperator(_current->token);
-//     if (!op) {
-//         throw std::runtime_error("Invalid expression.");
-//     }
-//     auto rhs = term();
-//     if (rhs == nullptr) {
-//         throw std::runtime_error("Invalid binary expression.");
-//     }
-//     std::vector<unique_ptr<AbstractAlphabetNode>> expressions(64);
-//     expressions.push_back(std::make_unique<BinaryExpression>(lhs, op, rhs));
-//     while (auto t = term() != nullptr) {
-//         if (auto op = getBinaryOperator(_current->token)) {
-//         }
-//     }
-// }
+std::unique_ptr<ArrayLiteral> GsParser::arrayLiteral() {
+    SourceLocation location{.line = _current->line, .column = _current->column};
+    if (!accept(TokenType::OPEN_BRACKET)) {
+        return nullptr;
+    }
+    std::vector<std::unique_ptr<AbstractAlphabetNode>> expressions;
+    if (auto expr = this->expression(); expr != nullptr) {
+        expressions.push_back(std::move(expr));
+        while (accept(TokenType::COMMA)) {
+            auto exprLocal = this->expression();
+            if (exprLocal == nullptr) {
+                throw std::runtime_error("Trailing commas are disallowed in array literals");
+            }
+            expressions.push_back(std::move(exprLocal));
+        }
+    }
+    expect(TokenType::CLOSE_BRACKET);
+    auto result = std::make_unique<ArrayLiteral>(std::move(expressions), location);
+    return result;
+}
 
 unique_ptr<AbstractAlphabetNode> GsParser::term() {
     unique_ptr<AbstractAlphabetNode> node = nullptr;
@@ -283,6 +267,8 @@ unique_ptr<AbstractAlphabetNode> GsParser::term() {
         node = std::move(sym);
     } else if (auto lit = literal(); lit != nullptr) {
         node = std::move(lit);
+    } else if (auto arr = arrayLiteral(); arr != nullptr) {
+        node = std::move(arr);
     } else {
         return nullptr;
     }
@@ -400,6 +386,10 @@ std::optional<std::string> GsParser::typeSpecifier() {
             case TokenType::SYMBOL: {
                 auto typeName = _current->value;
                 advance();
+                while (accept(TokenType::OPEN_BRACKET)) {
+                    expect(TokenType::CLOSE_BRACKET);
+                    typeName += "[]";
+                }
                 return typeName;
             }
             default: {

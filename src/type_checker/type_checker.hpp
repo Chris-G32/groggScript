@@ -29,6 +29,8 @@ class TypeChecker : public GSAlphabet::AbstractAlphabetNodeVisitor {
     void visitLiteral(GSAlphabet::Literal* node) override;
     void visitFunctionDeclaration(GSAlphabet::FunctionDeclaration* node) override;
     void visitConditionalStatement(GSAlphabet::ConditionalStatement* node) override;
+    void visitArrayLiteral(GSAlphabet::ArrayLiteral* node) override;
+
     void visitForLoop(GSAlphabet::ForLoop* node) override;
     ~TypeChecker() override = default;
     const auto& getErrors() { return errors_; }
@@ -39,6 +41,8 @@ class TypeChecker : public GSAlphabet::AbstractAlphabetNodeVisitor {
     }
     void addError_(const std::string& errorMessage);
     std::optional<std::string> popTypeResult();
+
+   private:
     std::vector<std::string> errors_;
     std::optional<std::string> typeResult_;
     TypeEnvironment env_;

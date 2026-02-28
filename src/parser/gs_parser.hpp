@@ -1,4 +1,5 @@
 #pragma once
+#include "../concrete_syntax_tree/alphabet/array_literal.hpp"
 #include "../concrete_syntax_tree/alphabet/call_expression.hpp"
 #include "../concrete_syntax_tree/alphabet/program.hpp"
 #include "../concrete_syntax_tree/alphabet/statement.hpp"
@@ -18,6 +19,7 @@ class GsParser {
     std::unique_ptr<GSAlphabet::Statements> statements();
     std::unique_ptr<GSAlphabet::Statement> statement();
     std::unique_ptr<GSAlphabet::AbstractAlphabetNode> expression();
+    std::unique_ptr<GSAlphabet::ArrayLiteral> arrayLiteral();
     std::unique_ptr<GSAlphabet::AbstractAlphabetNode> term();
     std::unique_ptr<GSAlphabet::Literal> literal();
     std::unique_ptr<GSAlphabet::Symbol> symbol();
@@ -38,7 +40,8 @@ class GsParser {
         const auto tmp = *_current;
         if (!accept(expected)) {
             throw std::runtime_error("Unexpected token received. Expected " +
-                                     tokenTypeToString(expected));
+                                     tokenTypeToString(expected) + " saw " +
+                                     GroggScript::tokenTypeToString(tmp.token));
         }
         return tmp;
     }

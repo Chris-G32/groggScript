@@ -8,15 +8,15 @@
 #include <sstream>
 #include <variant>
 
-template <class T1, class T2, class T3>
-constexpr bool both_same_as_v = std::is_same_v<T1, T3> && std::is_same_v<T2, T3>;
-
-template <class T1, class T2, class... SupportedType>
-constexpr bool same_and_supported =
-    std::is_same_v<T1, T2> && (both_same_as_v<T1, T2, SupportedType> || ...);
-
-template <class T, class... Ts>
-constexpr bool one_of_type = (std::is_same_v<T, Ts> || ...);
+// template <class T1, class T2, class T3>
+// constexpr bool both_same_as_v = std::is_same_v<T1, T3> && std::is_same_v<T2, T3>;
+//
+// template <class T1, class T2, class... SupportedType>
+// constexpr bool same_and_supported =
+//     std::is_same_v<T1, T2> && (both_same_as_v<T1, T2, SupportedType> || ...);
+//
+// template <class T, class... Ts>
+// constexpr bool one_of_type = (std::is_same_v<T, Ts> || ...);
 namespace GsInterpreter {
 
 std::string to_string(const gs_value_type value) {
@@ -31,6 +31,8 @@ std::string to_string(const gs_value_type value) {
             return "string";
         case gs_value_type::OBJECT:
             return "object";
+        case gs_value_type::ARRAY:
+            return "array";
         case gs_value_type::FUNCTION:
             return "function";
         case gs_value_type::EMPTY:
@@ -58,7 +60,6 @@ gs_value::gs_value(gs_value_variant val) : value(val) {
             } else {
                 type = gs_value_type::EMPTY;  // fallback for safety
             }
-            value = arg;
         },
         val);
 }
@@ -80,6 +81,17 @@ std::string to_string(const gs_value_variant& value) {
             }
             if constexpr (one_of_type<T, gs_string, gs_int, gs_float, gs_boolean>) {
                 oss << arg;
+                return oss.str();
+            }
+            if constexpr (std::is_same_v<T, gs_array>) {
+                bool outputComma = false;
+                oss << "[ ";
+                for (const auto& val : arg) {
+                    if (outputComma) oss << ", ";
+                    oss << to_string(val);
+                    outputComma = true;
+                }
+                oss << " ]";
                 return oss.str();
             }
             throw std::runtime_error("Not implemented");
@@ -114,12 +126,13 @@ bool gs_value::is_truthy() const {
     if (type == gs_value_type::EMPTY) {
         return false;
     }
+
     return std::visit(
-        [](const auto& val) -> bool {
-            using T = std::decay_t<decltype(val)>;
+        []<typename T0>(const T0& val) -> bool {
+            using T = std::decay_t<T0>;
             if constexpr (std::is_same_v<T, gs_boolean>) {
                 return val;
-            } else if constexpr (std::is_same_v<T, gs_string>) {
+            } else if constexpr (one_of_type<T, gs_string, gs_array>) {
                 return val.empty();
             } else if constexpr (std::is_same_v<T, gs_float> || std::is_same_v<T, gs_int>) {
                 return true;

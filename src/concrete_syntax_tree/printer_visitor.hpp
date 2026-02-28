@@ -3,6 +3,7 @@
 #include <ostream>
 
 #include "alphabet/abstract_alphabet_node.hpp"
+#include "alphabet/array_literal.hpp"
 #include "alphabet/binary_expression.hpp"
 #include "alphabet/conditional_statement.hpp"
 #include "alphabet/function_declaration.hpp"
@@ -117,8 +118,13 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
             printChild("type", arg.type);
         }
         asc();
-        printChild("return_type",
-                   node->returnType.value_or("no_type_provided"));
+        printChild("return_type", node->returnType.value_or("no_type_provided"));
+    }
+    void visitArrayLiteral(ArrayLiteral* node) override {
+        printNodeName("array_literal");
+        for (int i = 0; i < node->items.size(); i++) {
+            printChild("item" + std::to_string(i), node->items[i]);
+        }
     }
 
    private:
@@ -138,8 +144,7 @@ class PrinterVisitor : public AbstractAlphabetNodeVisitor {
         asc();
         asc();
     }
-    void printChild(const std::string& name,
-                    std::unique_ptr<AbstractAlphabetNode>& node) {
+    void printChild(const std::string& name, std::unique_ptr<AbstractAlphabetNode>& node) {
         desc();
         printTabDepth();
         std::cout << name << '\n';

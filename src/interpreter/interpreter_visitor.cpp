@@ -42,6 +42,8 @@ void throw_expected_non_void_expression() {
 InterpreterVisitor::InterpreterVisitor() {
     registerNativeFunction(GsBuiltIns::print);
     registerNativeFunction(GsBuiltIns::toString);
+    registerNativeFunction(GsBuiltIns::at);
+    registerNativeFunction(GsBuiltIns::atArray);
 }
 void InterpreterVisitor::visitProgram(Program* node) { visit(node->statements.get()); }
 void InterpreterVisitor::visitStatements(Statements* node) {
@@ -156,6 +158,15 @@ std::optional<gs_value> InterpreterVisitor::popExpressionResult() {
     DEBUG_LOG("ExprResult popped:" + (tmp.has_value() ? to_string(*tmp) : "null"));
     return tmp;
 }
+void InterpreterVisitor::visitArrayLiteral(ArrayLiteral* node) {
+    std::vector<gs_value> values;
+    values.reserve(node->items.size());
+    for (const auto& item : node->items) {
+        visit(item.get());
+        values.push_back(*popExpressionResult());
+    }
+    _exprResult = std::make_optional<gs_value>(values);
+}
 void InterpreterVisitor::visitCallExpression(CallExpression* node) {
     const auto sym = dynamic_cast<Symbol*>(node->callee.get());
     if (sym == nullptr) {
@@ -163,8 +174,8 @@ void InterpreterVisitor::visitCallExpression(CallExpression* node) {
         return;
     }
     const std::string identifier = sym->identifier;
-    auto binding = mEnvironment_.globals.getSymbol(identifier);
-    auto& foo = std::get<AbstractGsFunction*>(binding.value().value);
+    auto& binding = mEnvironment_.globals.getSymbol(identifier);
+    auto& foo = (binding.value().get<gs_function>());
     if (foo == nullptr) {
         throw std::runtime_error("Expected identifier '" + identifier +
                                  "' to be callable. Received:" + to_string(*binding));

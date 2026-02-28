@@ -16,8 +16,7 @@ class InterpreterVisitor : public GSAlphabet::AbstractAlphabetNodeVisitor {
     void visitProgram(GSAlphabet::Program* node) override;
     void visitStatements(GSAlphabet::Statements* node) override;
     void visitStatement(GSAlphabet::Statement* node) override;
-    void visitVariableDeclaration(
-        GSAlphabet::VariableDeclaration* node) override;
+    void visitVariableDeclaration(GSAlphabet::VariableDeclaration* node) override;
     void visitVariableAssignment(GSAlphabet::VariableAssignment* node) override;
     void visitBinaryExpression(GSAlphabet::BinaryExpression* node) override;
     void visitUnaryExpression(GSAlphabet::UnaryExpression* node) override;
@@ -25,10 +24,8 @@ class InterpreterVisitor : public GSAlphabet::AbstractAlphabetNodeVisitor {
     void visitLiteral(GSAlphabet::Literal* node) override;
     void visitForLoop(GSAlphabet::ForLoop* node) override;
     void visitCallExpression(GSAlphabet::CallExpression* node) override;
-    void visitFunctionDeclaration(
-        GSAlphabet::FunctionDeclaration* node) override;
-    void visitConditionalStatement(
-        GSAlphabet::ConditionalStatement* node) override;
+    void visitFunctionDeclaration(GSAlphabet::FunctionDeclaration* node) override;
+    void visitConditionalStatement(GSAlphabet::ConditionalStatement* node) override;
     [[nodiscard]] std::optional<gs_value> popExpressionResult();
     void setExprResult(std::optional<gs_value> result) {
         _exprResult = std::move(result);
@@ -40,6 +37,11 @@ class InterpreterVisitor : public GSAlphabet::AbstractAlphabetNodeVisitor {
     void registerNativeFunction(GsNativeFunction& foo) {
         mEnvironment_.globals.initializeSymbol(foo.name, gs_value(&foo));
     }
+
+   public:
+    void visitArrayLiteral(GSAlphabet::ArrayLiteral* node) override;
+
+   private:
     std::optional<gs_value> _exprResult = std::nullopt;
     bool _returnFlag = false;
     InterpreterState mEnvironment_;

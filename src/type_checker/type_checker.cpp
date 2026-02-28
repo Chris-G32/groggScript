@@ -4,6 +4,7 @@
 #include <functional>
 #include <ranges>
 
+#include "../concrete_syntax_tree/alphabet/array_literal.hpp"
 #include "../concrete_syntax_tree/alphabet/function_declaration.hpp"
 #include "../concrete_syntax_tree/alphabet/literal.hpp"
 #include "../concrete_syntax_tree/alphabet/program.hpp"
@@ -141,6 +142,28 @@ void TypeChecker::visitFunctionDeclaration(GSAlphabet::FunctionDeclaration* node
 }
 void TypeChecker::visitConditionalStatement(GSAlphabet::ConditionalStatement* node) {
     DEBUG_LOG("Conditional statement type checking not implemented");
+}
+void TypeChecker::visitArrayLiteral(GSAlphabet::ArrayLiteral* node) {
+    if (node->items.empty()) {
+        typeResult_ = std::nullopt;
+        return;
+    }
+    auto it = node->items.begin();
+    visit(it->get());
+    std::advance(it, 1);
+    std::optional<std::string> prevType = typeResult_;
+
+    for (; it != node->items.end(); std::advance(it, 1)) {
+        visit(it->get());
+        auto currentType = popTypeResult();
+        if (currentType != prevType) {
+            addError_(std::format("Failed to deduce type of array at {}",
+                                  formatSourceLocation(node->location())));
+            return;
+        }
+        prevType = currentType;
+    }
+    typeResult_ = prevType.value() + "[]";
 }
 void TypeChecker::visitForLoop(GSAlphabet::ForLoop* node) {
     DEBUG_LOG("For loop type checking not implemented");
